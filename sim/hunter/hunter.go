@@ -12,6 +12,62 @@ const ThoridalTheStarsFuryItemID = 34334
 
 var TalentTreeSizes = [3]int{21, 20, 24}
 
+const (
+	ClassSpellMask_HunterNone uint64 = 0
+
+	// Shots
+	ClassSpellMask_HunterAimedShot uint64 = 1 << iota
+	ClassSpellMask_HunterArcaneShot
+	ClassSpellMask_HunterChimeraShot
+	ClassSpellMask_HunterExplosiveShot
+	ClassSpellMask_HunterKillShot
+	ClassSpellMask_HunterMultiShot
+	ClassSpellMask_HunterSteadyShot
+
+	// Strikes
+	ClassSpellMask_HunterFlankingStrike
+	ClassSpellMask_HunterRaptorStrike
+	ClassSpellMask_HunterRaptorStrikeHit
+	ClassSpellMask_HunterWyvernStrike
+
+	// Stings
+	ClassSpellMask_HunterSerpentSting
+	ClassSpellMask_HunterSoFSerpentSting // Serpent Sting from [Strings of Fate]
+
+	// Traps
+	ClassSpellMask_HunterExplosiveTrap
+	ClassSpellMask_HunterFreezingTrap
+	ClassSpellMask_HunterImmolationTrap
+
+	// Other
+	ClassSpellMask_HunterCarve
+	ClassSpellMask_HunterCarveHit
+	ClassSpellMask_HunterMongooseBite
+	ClassSpellMask_HunterWingClip
+	ClassSpellMask_HunterVolley
+	ClassSpellMask_HunterChimeraSerpent
+	ClassSpellMask_HunterHuntersMark
+	ClassSpellMask_HunterFocusFire
+
+	// Pet Spells
+	ClassSpellMask_HunterPetBite
+	ClassSpellMask_HunterPetClaw
+	ClassSpellMask_HunterPetFlankingStrike
+	ClassSpellMask_HunterPetLightningBreath
+	ClassSpellMask_HunterPetLavaBreath
+	ClassSpellMask_HunterPetScreech
+	ClassSpellMask_HunterPetScorpidPoison
+	ClassSpellMask_HunterPetBasicAttacks   = ClassSpellMask_HunterPetBite | ClassSpellMask_HunterPetClaw | ClassSpellMask_HunterPetLightningBreath | ClassSpellMask_HunterPetLavaBreath | ClassSpellMask_HunterPetScorpidPoison
+	ClassSpellMask_HunterPetSpecialAttacks = ClassSpellMask_HunterPetScreech // TODO: Other specials?
+
+	ClassSpellMask_HunterAll = 1<<iota - 1
+
+	ClassSpellMask_HunterTraps   = ClassSpellMask_HunterExplosiveTrap | ClassSpellMask_HunterFreezingTrap | ClassSpellMask_HunterImmolationTrap
+	ClassSpellMask_HunterShots   = ClassSpellMask_HunterAimedShot | ClassSpellMask_HunterArcaneShot | ClassSpellMask_HunterChimeraShot | ClassSpellMask_HunterExplosiveShot | ClassSpellMask_HunterKillShot | ClassSpellMask_HunterMultiShot | ClassSpellMask_HunterSteadyShot
+	ClassSpellMask_HunterStrikes = ClassSpellMask_HunterFlankingStrike | ClassSpellMask_HunterRaptorStrike | ClassSpellMask_HunterRaptorStrikeHit | ClassSpellMask_HunterWyvernStrike | ClassSpellMask_HunterCarve | ClassSpellMask_HunterCarveHit
+	ClassSpellMask_HunterStings  = ClassSpellMask_HunterSerpentSting | ClassSpellMask_HunterSoFSerpentSting
+)
+
 type Hunter struct {
 	core.Character
 
@@ -19,6 +75,9 @@ type Hunter struct {
 
 	Talents *proto.HunterTalents
 	Options *proto.HunterOptions
+
+	latency     time.Duration
+	timeToWeave time.Duration
 
 	// Pet          *HunterPet
 	// StampedePet  []*HunterPet
@@ -32,10 +91,13 @@ type Hunter struct {
 
 	// Hunter spells
 	SerpentSting         *core.Spell
+	ArcaneShot           *core.Spell
 	ExplosiveTrap        *core.Spell
 	ExplosiveShot        *core.Spell
 	ImprovedSerpentSting *core.Spell
 	RapidFire            *core.Spell
+
+	Shots []*core.Spell
 
 	BestialWrathAura *core.Aura
 
@@ -83,6 +145,8 @@ func NewHunter(character *core.Character, options *proto.Player, hunterOptions *
 
 	hunter.PseudoStats.CanParry = true
 
+	hunter.EnableManaBar()
+
 	// Passive bonus (used to be from quiver).
 	//hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
 	rangedWeapon := hunter.WeaponFromRanged(0)
@@ -126,7 +190,7 @@ func NewHunter(character *core.Character, options *proto.Player, hunterOptions *
 func (hunter *Hunter) Initialize() {
 	hunter.AutoAttacks.RangedConfig().CritMultiplier = hunter.DefaultMeleeCritMultiplier()
 
-	hunter.RegisterSpells()
+	hunter.registerArcaneShotSpell()
 
 }
 
@@ -142,34 +206,14 @@ func (hunter *Hunter) ApplyTalents() {
 	// if hunter.Pet != nil {
 	// 	hunter.Pet.ApplyTalents()
 	// }
-}
 
-func (hunter *Hunter) RegisterSpells() {
-	// hunter.registerArcaneShotSpell()
-	// hunter.registerKillShotSpell()
-	// hunter.registerHawkSpell()
-	// hunter.RegisterLynxRushSpell()
-	// hunter.registerSerpentStingSpell()
-	// hunter.registerMultiShotSpell()
-	// hunter.registerExplosiveTrapSpell()
-	// hunter.registerCobraShotSpell()
-	// hunter.registerRapidFireCD()
-	// hunter.registerSilencingShotSpell()
-	// hunter.registerHuntersMarkSpell()
-	// hunter.registerAMOCSpell()
-	// hunter.registerBarrageSpell()
-	// hunter.registerGlaiveTossSpell()
-	// hunter.registerFervorSpell()
-	// hunter.RegisterDireBeastSpell()
-	// hunter.RegisterStampedeSpell()
-	// hunter.registerPowerShotSpell()
+	// hunter.ApplyArmorSpecializationEffect(stats.Agility, proto.ArmorType_ArmorTypeMail, 86538)
 }
 
 func (hunter *Hunter) AddStatDependencies() {
 	hunter.AddStatDependency(stats.Agility, stats.AttackPower, 2)
 	hunter.AddStatDependency(stats.Agility, stats.RangedAttackPower, 2)
 	hunter.AddStatDependency(stats.Agility, stats.PhysicalCritPercent, core.CritPerAgiMaxLevel[hunter.Class])
-	hunter.AddStatDependency(stats.Agility, stats.DodgeRating, 1.0/25*core.DodgeRatingPerDodgePercent)
 }
 
 func (hunter *Hunter) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
