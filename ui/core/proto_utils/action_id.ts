@@ -54,9 +54,9 @@ export class ActionId {
 				name = 'Mana Tick';
 				iconUrl = resourceTypeToIcon[ResourceType.ResourceTypeMana];
 				if (tag == 1) {
-					name += ' (In Combat)';
+					name += ' (Casting)';
 				} else if (tag == 2) {
-					name += ' (Out of Combat)';
+					name += ' (Not Casting)';
 				}
 				break;
 			case OtherAction.OtherActionEnergyRegen:

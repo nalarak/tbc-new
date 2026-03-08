@@ -554,7 +554,7 @@ func BuildSpellProcInfo(procSpell *dbc.Spell, tooltip string, itemType proto.Ite
 	// On hit proc
 	if itemType == proto.ItemType_ItemTypeWeapon {
 		info.Callback |= core.CallbackOnSpellHitDealt
-		info.ProcMask |= core.ProcMaskMelee
+		info.ProcMask |= core.ProcMaskUnknown
 	}
 
 	if itemType == proto.ItemType_ItemTypeRanged {
@@ -741,7 +741,7 @@ func asCoreProcMask(procMask core.ProcMask) string {
 	}
 
 	if len(procs) == 0 {
-		return "core.ProcMaskEmpty"
+		return "core.ProcMaskUnknown"
 	}
 	return strings.Join(procs, " | ")
 }

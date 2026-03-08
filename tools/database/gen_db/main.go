@@ -439,8 +439,22 @@ func ApplyGlobalFilters(db *database.WowDatabase) {
 			return false
 		}
 
-		_, uncut, _ := strings.Cut(gem.Name, " ")
-		if slices.Contains([]string{"Crimson Spinel", "Empyrean Sapphire", "Lionseye", "Shadowsong Amethyst", "Pyrestone", "Seaspray Emerald"}, uncut) {
+		prefix, uncut, _ := strings.Cut(gem.Name, " ")
+		if slices.Contains([]string{
+			"Forceful",
+			"Quick",
+			"Reckless",
+			"Purified Shadowsong",
+		}, prefix) {
+			gem.Phase = 5
+		} else if slices.Contains([]string{
+			"Crimson Spinel",
+			"Empyrean Sapphire",
+			"Lionseye",
+			"Shadowsong Amethyst",
+			"Pyrestone",
+			"Seaspray Emerald",
+		}, uncut) {
 			gem.Phase = 3
 		} else if gem.Name == "Charmed Amani Jewel" {
 			gem.Phase = 3

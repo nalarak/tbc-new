@@ -7,6 +7,7 @@ import { nameToClass, nameToProfession, nameToRace } from '../../../proto_utils/
 import Toast from '../../toast';
 import { IndividualImporter } from './individual_importer';
 import i18n from '../../../../i18n/config';
+import { CHARACTER_LEVEL } from '../../../constants/mechanics';
 
 export class IndividualAddonImporter<SpecType extends Spec> extends IndividualImporter<SpecType> {
 	static WSE_VERSION = getWSEVersion();
@@ -26,7 +27,7 @@ export class IndividualAddonImporter<SpecType extends Spec> extends IndividualIm
 				<p>{i18n.t('import.addon.feature_description')}</p>
 				<p>{i18n.t('import.addon.instructions')}</p>
 				<div ref={warningRef} />
-			</div>
+			</div>,
 		);
 	}
 
@@ -44,6 +45,15 @@ export class IndividualAddonImporter<SpecType extends Spec> extends IndividualIm
 		}
 
 		// Parse all the settings.
+		const level = importJson['level'];
+		if (level < CHARACTER_LEVEL) {
+			new Toast({
+				variant: 'warning',
+				body: `The character you imported is level ${level}. The Sim is intended to be used for max level only, so you might be missing certain items.`,
+				delay: 5000,
+			});
+		}
+
 		const charClass = nameToClass((importJson['class'] as string) || '');
 		if (charClass == Class.ClassUnknown) {
 			throw new Error('Could not parse Class!');
@@ -63,7 +73,7 @@ export class IndividualAddonImporter<SpecType extends Spec> extends IndividualIm
 
 		const talentsStr = (importJson['talents'] as string) || '';
 
-		const db = await Database.get();
+		await Database.get();
 
 		const gearJson = importJson['gear'];
 		gearJson.items = (gearJson.items as Array<any>).filter(item => item != null);
@@ -86,14 +96,14 @@ export class IndividualAddonImporter<SpecType extends Spec> extends IndividualIm
 	}
 }
 
-function getWSEVersion(): Promise<string|null> {
+function getWSEVersion(): Promise<string | null> {
 	return fetch('https://api.github.com/repos/wowsims/exporter/releases/latest')
 		.then(resp => {
 			return resp.json().then(json => {
 				return json.tag_name as string;
-			})
+			});
 		})
 		.catch(_ => {
 			return null;
-		})
+		});
 }

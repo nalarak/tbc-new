@@ -197,7 +197,7 @@ func (mage *Mage) registerArcaneMeditation() {
 		return
 	}
 
-	mage.PseudoStats.SpiritRegenRateCombat += float64(mage.Talents.ArcaneMeditation) * 0.1
+	mage.PseudoStats.SpiritRegenRateCasting += float64(mage.Talents.ArcaneMeditation) * 0.1
 	mage.UpdateManaRegenRates()
 }
 
@@ -499,12 +499,12 @@ func (mage *Mage) registerIceShards() {
 	if mage.Talents.IceShards == 0 {
 		return
 	}
+
 	mage.AddStaticMod(core.SpellModConfig{
-		ClassMask:  MageSpellsAll,
+		School:     core.SpellSchoolFrost,
 		FloatValue: .2 * float64(mage.Talents.IceShards),
 		Kind:       core.SpellMod_CritMultiplier_Flat,
 	})
-
 }
 
 func (mage *Mage) registerImprovedFrostNova() {

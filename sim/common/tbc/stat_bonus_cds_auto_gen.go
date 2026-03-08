@@ -6,7 +6,7 @@ import (
 
 func RegisterAllOnUseCds() {
 
-	//
+	// 
 	// shared.NewSimpleStatActive(13143) // Mark of the Dragon Lord - https://www.wowhead.com/tbc/spell=17252
 	// shared.NewSimpleStatActive(13171) // Smokey's Lighter - https://www.wowhead.com/tbc/spell=17283
 	// shared.NewSimpleStatActive(13213) // Smolderweb's Eye - https://www.wowhead.com/tbc/spell=17330
@@ -103,9 +103,6 @@ func RegisterAllOnUseCds() {
 	shared.NewSimpleStatActive(19345) // Aegis of Preservation - https://www.wowhead.com/tbc/spell=23780
 	shared.NewSimpleStatActive(27891) // Adamantine Figurine - https://www.wowhead.com/tbc/spell=33479
 	shared.NewSimpleStatActive(33830) // Ancient Aqir Artifact - https://www.wowhead.com/tbc/spell=43713
-
-	// Armor / AttackPower / SpellDamage
-	shared.NewSimpleStatActive(19337) // The Black Book - https://www.wowhead.com/tbc/spell=23720
 
 	// ArmorPenetration
 	shared.NewSimpleStatActive(28121) // Icon of Unyielding Courage - https://www.wowhead.com/tbc/spell=34106

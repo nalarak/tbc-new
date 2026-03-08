@@ -23,6 +23,7 @@ import {
 	UnitReference_Type,
 	WeaponType,
 } from '../proto/common.js';
+import { Consumable } from '../proto/db';
 import {
 	BalanceDruid,
 	BalanceDruid_Options,
@@ -82,7 +83,7 @@ import {
 	ShamanOptions,
 	ShamanTalents,
 } from '../proto/shaman.js';
-import { ResourceType } from '../proto/spell';
+import { ResourceType, SpellEffect } from '../proto/spell';
 import { BlessingsAssignment, BlessingsAssignments, UIEnchant as Enchant, UIGem as Gem, UIItem as Item } from '../proto/ui.js';
 import { Warlock, Warlock_Options, Warlock_Rotation, WarlockOptions, WarlockTalents } from '../proto/warlock.js';
 import {
@@ -96,7 +97,7 @@ import {
 	WarriorTalents,
 } from '../proto/warrior.js';
 import { getEnumValues, intersection, sum } from '../utils.js';
-import { Stats } from './stats.js';
+import { Database } from './database';
 
 export const NUM_SPECS = getEnumValues(Spec).length;
 
@@ -1130,7 +1131,7 @@ const metaGemEffectEPs: Partial<Record<Spec, (gem: Gem, player: Player<any>) => 
 		// Relentless Earthstorm Diamond
 		if (gem.id == 32409) {
 			const epWeights = player.getEpWeights();
-			const relativeStrengthEP = (44.46 / epWeights.getStat(Stat.StatStrength))
+			const relativeStrengthEP = 44.46 / epWeights.getStat(Stat.StatStrength);
 			return relativeStrengthEP;
 		}
 		return 0;
@@ -1387,6 +1388,35 @@ export const defaultRaidBuffMajorDamageCooldowns = (classID?: Class): Partial<Ra
 	return RaidBuffs.create({
 		bloodlust: true,
 	});
+};
+
+// Adds missing Consumables and SpellEffects to the given player proto.
+export const extendPlayerProtoWithMissingEffects = (playerProto: PlayerProto, db: Database) => {
+	const newConsumables: Consumable[] = [];
+	const newSpellEffects: SpellEffect[] = [];
+	const seenConsumableIds = new Set<number>();
+	const seenEffectIds = new Set<number>();
+	Object.values(playerProto.consumables ?? []).forEach((cid: number) => {
+		if (!cid || seenConsumableIds.has(cid)) return;
+		const consume = db.getConsumable(cid);
+		if (!consume) return;
+		seenConsumableIds.add(consume.id);
+		newConsumables.push(consume);
+		for (const eid of consume.effectIds) {
+			if (seenEffectIds.has(eid)) continue;
+			const effect = db.getSpellEffect(eid);
+			if (!effect) continue;
+
+			seenEffectIds.add(effect.id);
+			newSpellEffects.push(effect);
+		}
+	});
+
+	if (playerProto.database) {
+		// swap in the fresh arrays
+		playerProto.database.consumables = newConsumables;
+		playerProto.database.spellEffects = newSpellEffects;
+	}
 };
 
 // Utilities for migrating protos between versions

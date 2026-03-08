@@ -1,75 +1,102 @@
-import * as BuffDebuffInputs from '../../core/components/inputs/buffs_debuffs';
-import * as OtherInputs from '../../core/components/inputs/other_inputs';
-import * as Mechanics from '../../core/constants/mechanics.js';
+import { ReforgeOptimizer } from '../../core/components/suggest_reforges_action';
+import * as other_inputs from '../../core/components/inputs/other_inputs';
 import { IndividualSimUI, registerSpecConfig } from '../../core/individual_sim_ui';
 import { Player } from '../../core/player';
 import { PlayerClasses } from '../../core/player_classes';
 import { APLRotation } from '../../core/proto/apl';
-import { Debuffs, Faction, IndividualBuffs, ItemSlot, PartyBuffs, PseudoStat, Race, RaidBuffs, Spec, Stat } from '../../core/proto/common';
-import { Stats, UnitStat } from '../../core/proto_utils/stats';
-import { defaultRaidBuffMajorDamageCooldowns } from '../../core/proto_utils/utils';
+import { Faction, ItemSlot, PseudoStat, Race, Spec, Stat } from '../../core/proto/common';
+import { StatCapType } from '../../core/proto/ui';
+import { StatCap, Stats, UnitStat } from '../../core/proto_utils/stats';
 import * as HunterInputs from './inputs';
-import * as Inputs from './inputs';
 import * as Presets from './presets';
 
 const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 	cssClass: 'hunter-sim-ui',
 	cssScheme: PlayerClasses.getCssClass(PlayerClasses.Hunter),
 	// List any known bugs / issues here and they'll be shown on the site.
-	knownIssues: ['Glaive Toss hits AoE targets only once.'],
+	knownIssues: [],
 	warnings: [],
 	// All stats for which EP should be calculated.
 	epStats: [
+		Stat.StatStrength,
 		Stat.StatAgility,
+		Stat.StatAttackPower,
 		Stat.StatRangedAttackPower,
+		Stat.StatArmorPenetration,
+		Stat.StatMeleeHitRating,
+		Stat.StatMeleeHasteRating,
+		Stat.StatMeleeCritRating,
+		Stat.StatArmorPenetration,
+		Stat.StatExpertiseRating,
 	],
-	gemStats: [
-		Stat.StatStamina,
-		Stat.StatAgility,
-	],
-	epPseudoStats: [PseudoStat.PseudoStatRangedDps],
+	gemStats: [Stat.StatStamina, Stat.StatAgility],
+	epPseudoStats: [PseudoStat.PseudoStatRangedHitPercent, PseudoStat.PseudoStatRangedCritPercent, PseudoStat.PseudoStatRangedDps],
 	// Reference stat against which to calculate EP.
 	epReferenceStat: Stat.StatAgility,
 	// Which stats to display in the Character Stats section, at the bottom of the left-hand sidebar.
 	displayStats: UnitStat.createDisplayStatArray(
-		[Stat.StatHealth, Stat.StatStamina, Stat.StatAgility, Stat.StatRangedAttackPower],
-		[PseudoStat.PseudoStatRangedHitPercent, PseudoStat.PseudoStatRangedCritPercent, PseudoStat.PseudoStatRangedHastePercent],
+		[
+			Stat.StatHealth,
+			Stat.StatStamina,
+			Stat.StatStrength,
+			Stat.StatAgility,
+			Stat.StatAttackPower,
+			Stat.StatRangedAttackPower,
+			Stat.StatExpertiseRating,
+			Stat.StatArmorPenetration,
+		],
+		[
+			PseudoStat.PseudoStatMeleeHitPercent,
+			PseudoStat.PseudoStatMeleeCritPercent,
+			PseudoStat.PseudoStatRangedHitPercent,
+			PseudoStat.PseudoStatRangedCritPercent,
+			PseudoStat.PseudoStatRangedHastePercent,
+		],
 	),
-	itemSwapSlots: [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotTrinket1, ItemSlot.ItemSlotTrinket2],
+	itemSwapSlots: [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand, ItemSlot.ItemSlotRanged, ItemSlot.ItemSlotTrinket1, ItemSlot.ItemSlotTrinket2],
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.BLANK_GEARSET.gear,
+		gear: Presets.P1_2H_GEARSET.gear,
 		// Default EP weights for sorting gear in the gear picker.
-		epWeights: Presets.P2_EP_PRESET.epWeights,
+		epWeights: Presets.P1_EP_PRESET.epWeights,
+		softCapBreakpoints: (() => {
+			const rangedHitSoftCapConfig = StatCap.fromPseudoStat(PseudoStat.PseudoStatMeleeHitPercent, {
+				breakpoints: [9],
+				capType: StatCapType.TypeSoftCap,
+				postCapEPs: [0],
+			});
+
+			return [rangedHitSoftCapConfig];
+		})(),
 		other: Presets.OtherDefaults,
 		// Default consumes settings.
 		consumables: Presets.DefaultConsumables,
 		// Default talents.
-		talents: Presets.Talents.data,
+		talents: Presets.BMTalents.data,
 		// Default spec-specific settings.
-		specOptions: Presets.MMDefaultOptions,
+		specOptions: Presets.DefaultOptions,
 		// Default raid/party buffs settings.
-		raidBuffs: RaidBuffs.create({
-			...defaultRaidBuffMajorDamageCooldowns(),
-		}),
-		partyBuffs: PartyBuffs.create({}),
-		individualBuffs: IndividualBuffs.create({}),
-		debuffs: Debuffs.create({
-
-		}),
+		raidBuffs: Presets.DefaultRaidBuffs,
+		partyBuffs: Presets.DefaultPartyBuffs,
+		individualBuffs: Presets.DefaultIndividualBuffs,
+		debuffs: Presets.DefaultDebuffs,
 	},
 
 	// IconInputs to include in the 'Player' section on the settings tab.
-	playerIconInputs: [HunterInputs.PetTypeInput()],
-	// Inputs to include in the 'Rotation' section on the settings tab.
-	rotationInputs: Inputs.MMRotationConfig,
+	playerIconInputs: [HunterInputs.PetTypeInput(), HunterInputs.QuiverInput(), HunterInputs.AmmoInput()],
 	petConsumeInputs: [],
 	// Buff and Debuff inputs to include/exclude, overriding the EP-based defaults.
-	includeBuffDebuffInputs: [, ],
+	includeBuffDebuffInputs: [],
 	excludeBuffDebuffInputs: [],
 	// Inputs to include in the 'Other' section on the settings tab.
 	otherInputs: {
-		inputs: [HunterInputs.PetUptime(), HunterInputs.GlaiveTossChance(), OtherInputs.InputDelay, OtherInputs.DistanceFromTarget, OtherInputs.TankAssignment],
+		inputs: [
+			HunterInputs.PetUptime(),
+			HunterInputs.PetSingleAbility(),
+			other_inputs.InputDelay,
+			other_inputs.DistanceFromTarget,
+			other_inputs.TankAssignment,
+		],
 	},
 	encounterPicker: {
 		// Whether to include 'Execute Duration (%)' in the 'Encounter' section of the settings tab.
@@ -77,25 +104,25 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 	},
 
 	presets: {
-		epWeights: [],
+		epWeights: [Presets.P1_EP_PRESET],
 		// Preset talents that the user can quickly select.
-		talents: [],
+		talents: [Presets.BMTalents, Presets.SVTalents],
 		// Preset rotations that the user can quickly select.
-		rotations: [],
+		rotations: [Presets.DEFAULT_APL],
 		// Preset gear configurations that the user can quickly select.
 		builds: [],
-		gear: [],
+		gear: [Presets.P1_2H_GEARSET],
 	},
 
 	autoRotation: (_: Player<Spec.SpecHunter>): APLRotation => {
-		return Presets.BLANK_APL.rotation.rotation!;
+		return Presets.DEFAULT_APL.rotation.rotation!;
 	},
 
 	raidSimPresets: [
 		{
 			spec: Spec.SpecHunter,
-			talents: Presets.Talents.data,
-			specOptions: Presets.MMDefaultOptions,
+			talents: Presets.BMTalents.data,
+			specOptions: Presets.DefaultOptions,
 
 			consumables: Presets.DefaultConsumables,
 			defaultFactionRaces: {
@@ -106,10 +133,10 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 			defaultGear: {
 				[Faction.Unknown]: {},
 				[Faction.Alliance]: {
-					1: Presets.BLANK_GEARSET.gear,
+					1: Presets.P1_2H_GEARSET.gear,
 				},
 				[Faction.Horde]: {
-					1: Presets.BLANK_GEARSET.gear,
+					1: Presets.P1_2H_GEARSET.gear,
 				},
 			},
 			otherDefaults: Presets.OtherDefaults,
@@ -120,5 +147,6 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 export class HunterSimUI extends IndividualSimUI<Spec.SpecHunter> {
 	constructor(parentElem: HTMLElement, player: Player<Spec.SpecHunter>) {
 		super(parentElem, player, SPEC_CONFIG);
+		this.reforger = new ReforgeOptimizer(this);
 	}
 }

@@ -7,38 +7,42 @@ import (
 )
 
 func (hunter *Hunter) registerArcaneShotSpell() {
-	baseCost := 230.0
-
 	hunter.ArcaneShot = hunter.RegisterSpell(core.SpellConfig{
-		ClassSpellMask: HunterSpellArcaneShot,
 		ActionID:       core.ActionID{SpellID: 27019},
 		SpellSchool:    core.SpellSchoolArcane,
+		ClassSpellMask: HunterSpellArcaneShot,
+		ProcMask:       core.ProcMaskRangedSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
-		ProcMask: core.ProcMaskRangedSpecial,
-		Flags:    core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
-
-		MissileSpeed: 24,
+		MissileSpeed: 40,
+		MinRange:     core.MaxMeleeRange,
+		MaxRange:     HunterBaseMaxRange,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:        int32(baseCost),
-			PercentModifier: 1,
+			FlatCost: 230,
 		},
+
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				Cost: baseCost * (1 - 0.02*float64(hunter.Talents.Efficiency)),
-				GCD:  core.GCDDefault + hunter.latency,
+				GCD: core.GCDDefault,
 			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
-				Duration: time.Second*6 - time.Millisecond*200*time.Duration(hunter.Talents.ImprovedArcaneShot),
+				Duration: time.Second * 6,
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			wepDmg := hunter.AutoAttacks.Ranged().CalculateNormalizedWeaponDamage(sim, spell.RangedAttackPower())
+		DamageMultiplier: 1,
+		CritMultiplier:   hunter.DefaultMeleeCritMultiplier(),
+		ThreatMultiplier: 1,
 
-			baseDamage := wepDmg + (hunter.ClassSpellScaling*0.15 + 273)
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			baseDamage := spell.RangedAttackPower()*0.15 + 273
+
+			if hunter.TalonOfAlarAura.IsActive() {
+				baseDamage += 40
+			}
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 
@@ -47,5 +51,4 @@ func (hunter *Hunter) registerArcaneShotSpell() {
 			})
 		},
 	})
-
 }

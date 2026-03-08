@@ -144,6 +144,7 @@ func (rogue *Rogue) Initialize() {
 	rogue.registerSliceAndDice()
 	rogue.registerVanishSpell()
 	rogue.registerShivSpell()
+	rogue.registerStealthAura()
 
 	rogue.ruthlessnessMetrics = rogue.NewComboPointMetrics(core.ActionID{SpellID: 14161})
 	rogue.relentlessStrikesMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 14179})
@@ -248,7 +249,7 @@ func RegisterRogue() {
 	core.RegisterAgentFactory(
 		proto.Player_Rogue{},
 		proto.Spec_SpecRogue,
-		func(character *core.Character, options *proto.Player) core.Agent {
+		func(character *core.Character, options *proto.Player, _ *proto.Raid) core.Agent {
 			return NewRogue(character, options, options.TalentsString)
 		},
 		func(player *proto.Player, spec interface{}) {
@@ -291,13 +292,14 @@ const (
 	RogueSpellColdBlood
 	RogueSpellMutilate
 	RogueSpellMutilateHit
+	RogueSpellGhostlyStrike
 	RogueSpellInstantPoison
 	RogueSpellWoundPoison
 	RogueSpellDeadlyPoison
-	RogueSpellGhostlyStrike
 
 	RogueSpellLast
-	RogueSpellsAll = RogueSpellLast<<1 - 1
+	RogueSpellsAll    = RogueSpellLast<<1 - 1
+	RogueSpellActives = RogueSpellGhostlyStrike<<1 - 1
 
 	RogueSpellPoisons        = RogueSpellWoundPoison | RogueSpellDeadlyPoison | RogueSpellInstantPoison
 	RogueSpellLethality      = RogueSpellSinisterStrike | RogueSpellGouge | RogueSpellBackstab | RogueSpellGhostlyStrike | RogueSpellMutilateHit | RogueSpellShiv | RogueSpellHemorrhage

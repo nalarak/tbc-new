@@ -8,7 +8,10 @@ import (
 	"github.com/wowsims/tbc/sim/core/stats"
 )
 
-const ThoridalTheStarsFuryItemID = 34334
+const (
+	HunterBaseMaxRange         = 35
+	ThoridalTheStarsFuryItemID = 34334
+)
 
 var TalentTreeSizes = [3]int{21, 20, 24}
 
@@ -76,33 +79,34 @@ type Hunter struct {
 	Talents *proto.HunterTalents
 	Options *proto.HunterOptions
 
-	latency     time.Duration
-	timeToWeave time.Duration
+	Pet *HunterPet
 
-	// Pet          *HunterPet
-	// StampedePet  []*HunterPet
-	// DireBeastPet *HunterPet
-	// Thunderhawks []*ThunderhawkPet
+	AmmoDPS         float64
+	AmmoDamageBonus float64
 
-	// The most recent time at which moving could have started, for trap weaving.
-	mayMoveAt time.Duration
+	killCommandEnabledUntil time.Duration // Time that KC enablement expires.
 
-	AspectOfTheHawk *core.Spell
+	AimedShot        *core.Spell
+	ArcaneShot       *core.Spell
+	AspectOfTheHawk  *core.Spell
+	AspectOfTheViper *core.Spell
+	BestialWrath     *core.Spell
+	KillCommand      *core.Spell
+	MultiShot        *core.Spell
+	RapidFire        *core.Spell
+	RaptorStrike     *core.Spell
+	Readiness        *core.Spell
+	ScorpidSting     *core.Spell
+	SerpentSting     *core.Spell
+	SteadyShot       *core.Spell
+	// HuntersMarkSpell *core.Spell
 
-	// Hunter spells
-	SerpentSting         *core.Spell
-	ArcaneShot           *core.Spell
-	ExplosiveTrap        *core.Spell
-	ExplosiveShot        *core.Spell
-	ImprovedSerpentSting *core.Spell
-	RapidFire            *core.Spell
-
-	Shots []*core.Spell
-
-	BestialWrathAura *core.Aura
-
-	// Fake spells to encapsulate weaving logic.
-	HuntersMarkSpell *core.Spell
+	AspectOfTheHawkAura  *core.Aura
+	AspectOfTheViperAura *core.Aura
+	GronnStalker2PcAura  *core.Aura
+	RapidFireAura        *core.Aura
+	TalonOfAlarAura      *core.Aura
+	TheBeastWithinAura   *core.Aura
 }
 
 func (hunter *Hunter) GetCharacter() *core.Character {
@@ -117,8 +121,8 @@ func RegisterHunter() {
 	core.RegisterAgentFactory(
 		proto.Player_Hunter{},
 		proto.Spec_SpecHunter,
-		func(character *core.Character, options *proto.Player) core.Agent {
-			return NewHunter(character, options, options.GetHunter().Options.ClassOptions)
+		func(character *core.Character, options *proto.Player, raid *proto.Raid) core.Agent {
+			return NewHunter(character, options, options.GetHunter().Options.ClassOptions, raid)
 		},
 		func(player *proto.Player, spec interface{}) {
 			playerSpec, ok := spec.(*proto.Player_Hunter)
@@ -130,146 +134,124 @@ func RegisterHunter() {
 	)
 }
 
-func NewHunter(character *core.Character, options *proto.Player, hunterOptions *proto.HunterOptions) *Hunter {
+func NewHunter(character *core.Character, options *proto.Player, hunterOptions *proto.HunterOptions, raid *proto.Raid) *Hunter {
 	hunter := &Hunter{
 		Character: *character,
 		Talents:   &proto.HunterTalents{},
 		Options:   hunterOptions,
 	}
 
-	core.FillTalentsProto(hunter.Talents.ProtoReflect(), options.TalentsString, TalentTreeSizes)
-	// focusPerSecond := 4.0
+	if hunter.Options.PetType == proto.HunterOptions_Bat || hunter.Options.PetType == proto.HunterOptions_Owl {
+		raid.Debuffs.Screech = false
+	}
 
-	// kindredSpritsBonusFocus := core.TernaryFloat64(hunter.Spec == proto.Spec_SpecBeastMasteryHunter, 20, 0)
-	//hunter.EnableFocusBar(100+kindredSpritsBonusFocus, focusPerSecond, true, nil, true)
+	if hunter.Talents.ExposeWeakness > 0 {
+		raid.Debuffs.ExposeWeaknessHunterAgility = 0
+		raid.Debuffs.ExposeWeaknessUptime = 0
+	}
+
+	core.FillTalentsProto(hunter.Talents.ProtoReflect(), options.TalentsString, TalentTreeSizes)
 
 	hunter.PseudoStats.CanParry = true
 
 	hunter.EnableManaBar()
 
-	// Passive bonus (used to be from quiver).
-	//hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
-	rangedWeapon := hunter.WeaponFromRanged(0)
+	rangedWeapon := hunter.WeaponFromRanged(hunter.DefaultMeleeCritMultiplier())
+	hunter.PseudoStats.RangedSpeedMultiplier = 1.0
+	if wep := hunter.GetRangedWeapon(); wep != nil && wep.ID == ThoridalTheStarsFuryItemID {
+		hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
+	} else {
+		switch hunter.Options.Ammo {
+		case proto.HunterOptions_TimelessArrow:
+			hunter.AmmoDPS = 53
+		case proto.HunterOptions_MysteriousArrow:
+			hunter.AmmoDPS = 46.5
+		case proto.HunterOptions_AdamantiteStinger:
+			hunter.AmmoDPS = 43
+		case proto.HunterOptions_WardensArrow:
+			hunter.AmmoDPS = 37
+		case proto.HunterOptions_HalaaniRazorshaft:
+			hunter.AmmoDPS = 34
+		case proto.HunterOptions_BlackflightArrow:
+			hunter.AmmoDPS = 32
+		}
+		hunter.AmmoDamageBonus = hunter.AmmoDPS * rangedWeapon.SwingSpeed
+		rangedWeapon.BaseDamageMin += hunter.AmmoDamageBonus
+		rangedWeapon.BaseDamageMax += hunter.AmmoDamageBonus
+
+		switch hunter.Options.QuiverBonus {
+		case proto.HunterOptions_Speed10:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.1
+		case proto.HunterOptions_Speed11:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.11
+		case proto.HunterOptions_Speed12:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.12
+		case proto.HunterOptions_Speed13:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.13
+		case proto.HunterOptions_Speed14:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.14
+		case proto.HunterOptions_Speed15:
+			hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
+		}
+	}
 
 	hunter.EnableAutoAttacks(hunter, core.AutoAttackOptions{
-		Ranged: rangedWeapon,
-		//ReplaceMHSwing:  hunter.TryRaptorStrike, //Todo: Might be weaving
+		Ranged:          rangedWeapon,
+		MainHand:        hunter.WeaponFromMainHand(hunter.DefaultMeleeCritMultiplier()),
+		OffHand:         hunter.WeaponFromOffHand(hunter.DefaultMeleeCritMultiplier()),
+		ReplaceMHSwing:  hunter.TryRaptorStrike,
 		AutoSwingRanged: true,
-		AutoSwingMelee:  false,
+		AutoSwingMelee:  true,
 	})
 
-	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower())
-
-		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-
-		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-			spell.DealDamage(sim, result)
-		})
-	}
+	rangedConfig := hunter.AutoAttacks.RangedConfig()
+	rangedConfig.MaxRange = HunterBaseMaxRange
 
 	hunter.AddStatDependencies()
 
-	// hunter.Pet = hunter.NewHunterPet()
-	// hunter.StampedePet = make([]*HunterPet, 4)
-	// for index := range 4 {
-	// 	hunter.StampedePet[index] = hunter.NewStampedePet(index)
-	// }
-
-	// hunter.DireBeastPet = hunter.NewDireBeastPet()
-
-	// // Add 10 just to be protected against weird good luck :)
-	// hunter.Thunderhawks = make([]*ThunderhawkPet, 10)
-	// for index := range 10 {
-	// 	hunter.Thunderhawks[index] = hunter.NewThunderhawkPet(index)
-	// }
+	hunter.Pet = hunter.NewHunterPet()
 
 	return hunter
 }
 
 func (hunter *Hunter) Initialize() {
+	hunter.AutoAttacks.MHConfig().CritMultiplier = hunter.DefaultMeleeCritMultiplier()
+	hunter.AutoAttacks.OHConfig().CritMultiplier = hunter.DefaultMeleeCritMultiplier()
 	hunter.AutoAttacks.RangedConfig().CritMultiplier = hunter.DefaultMeleeCritMultiplier()
 
+	hunter.RegisterSpells()
+	hunter.addPvpGloves()
+}
+
+func (hunter *Hunter) RegisterSpells() {
 	hunter.registerArcaneShotSpell()
-
-}
-
-func (hunter *Hunter) GetBaseDamageFromCoeff(coeff float64) float64 {
-	return coeff * hunter.ClassSpellScaling
-}
-
-func (hunter *Hunter) ApplyTalents() {
-	// hunter.applyThrillOfTheHunt()
-	// hunter.ApplyHotfixes()
-	// hunter.addBloodthirstyGloves()
-
-	// if hunter.Pet != nil {
-	// 	hunter.Pet.ApplyTalents()
-	// }
-
-	// hunter.ApplyArmorSpecializationEffect(stats.Agility, proto.ArmorType_ArmorTypeMail, 86538)
+	hunter.registerAspects()
+	hunter.registerKillCommandSpell()
+	hunter.registerMultiShotSpell()
+	hunter.registerRaptorStrikeSpell()
+	hunter.registerRapidFireCD()
+	hunter.registerScorpidStingSpell()
+	hunter.registerSerpentStingSpell()
+	hunter.registerSteadyShotSpell()
+	// hunter.registerHuntersMarkSpell()
 }
 
 func (hunter *Hunter) AddStatDependencies() {
-	hunter.AddStatDependency(stats.Agility, stats.AttackPower, 2)
-	hunter.AddStatDependency(stats.Agility, stats.RangedAttackPower, 2)
+	hunter.AddStatDependency(stats.Strength, stats.AttackPower, 1)
+	hunter.AddStatDependency(stats.Agility, stats.RangedAttackPower, 1)
 	hunter.AddStatDependency(stats.Agility, stats.PhysicalCritPercent, core.CritPerAgiMaxLevel[hunter.Class])
 }
 
 func (hunter *Hunter) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
-	// raidBuffs.TrueshotAura = true
-
-	// // if hunter.Talents.FerociousInspiration && hunter.Options.PetType != proto.HunterOptions_PetNone {
-	// // 	raidBuffs.FerociousInspiration = true
-	// // }
-
-	// if hunter.Options.PetType == proto.HunterOptions_CoreHound {
-	// 	raidBuffs.Bloodlust = true
-	// }
-	// switch hunter.Options.PetType {
-	// case proto.HunterOptions_CoreHound:
-	// 	raidBuffs.Bloodlust = true
-
-	// case proto.HunterOptions_ShaleSpider:
-	// 	raidBuffs.EmbraceOfTheShaleSpider = true
-
-	// case proto.HunterOptions_Wolf:
-	// 	raidBuffs.FuriousHowl = true
-	// case proto.HunterOptions_Devilsaur:
-	// 	raidBuffs.TerrifyingRoar = true
-	// case proto.HunterOptions_WaterStrider:
-	// 	raidBuffs.StillWater = true
-	// case proto.HunterOptions_Hyena:
-	// 	raidBuffs.CacklingHowl = true
-	// case proto.HunterOptions_Serpent:
-	// 	raidBuffs.SerpentsSwiftness = true
-	// case proto.HunterOptions_SporeBat:
-	// 	raidBuffs.MindQuickening = true
-	// case proto.HunterOptions_Cat:
-	// 	raidBuffs.RoarOfCourage = true
-	// case proto.HunterOptions_SpiritBeast:
-	// 	raidBuffs.SpiritBeastBlessing = true
-	// }
-	// if hunter.Options.PetType == proto.HunterOptions_ShaleSpider {
-	// 	raidBuffs.BlessingOfKings = true
-	// }
-
-	// if hunter.Options.PetType == proto.HunterOptions_Wolf || hunter.Options.PetType == proto.HunterOptions_Devilsaur {
-	// 	raidBuffs.FuriousHowl = true
-	// }
-
-	// TODO: Fix this to work with the new talent system.
-	//
-	//	if hunter.Talents.HuntingParty {
-	//		raidBuffs.HuntingParty = true
-	//	}
 }
 
-func (hunter *Hunter) AddPartyBuffs(_ *proto.PartyBuffs) {
+func (hunter *Hunter) AddPartyBuffs(partyBuffs *proto.PartyBuffs) {
+	if hunter.Talents.TrueshotAura {
+		partyBuffs.TrueshotAura = true
+	}
 }
 
 func (hunter *Hunter) Reset(_ *core.Simulation) {
-	hunter.mayMoveAt = 0
 }
 
 func (hunter *Hunter) OnEncounterStart(sim *core.Simulation) {
@@ -279,35 +261,33 @@ const (
 	HunterSpellFlagsNone int64 = 0
 	SpellMaskSpellRanged int64 = 1 << iota
 	HunterSpellAutoShot
-	HunterSpellSteadyShot
-	HunterSpellCobraShot
-	HunterSpellArcaneShot
-	HunterSpellKillCommand
-	HunterSpellChimeraShot
-	HunterSpellExplosiveShot
-	HunterSpellExplosiveTrap
-	HunterSpellBlackArrow
-	HunterSpellMultiShot
 	HunterSpellAimedShot
-	HunterSpellSerpentSting
-	HunterSpellKillShot
-	HunterSpellRapidFire
+	HunterSpellArcaneShot
+	HunterSpellAspectOfTheHawk
+	HunterSpellAspectOfTheViper
 	HunterSpellBestialWrath
-	HunterPetFocusDump
+	HunterSpellKillCommand
+	HunterSpellKillCommandPet
+	HunterSpellMultiShot
+	HunterSpellRapidFire
+	HunterSpellRaptorStrike
+	HunterSpellRaptorStrikeQueue
+	HunterSpellReadiness
+	HunterSpellScorpidSting
+	HunterSpellSerpentSting
+	HunterSpellSteadyShot
+	HunterSpellVolley
 	HunterPetDamage
-	HunterPetBeastCleaveHit
-	HunterSpellFervor
-	HunterSpellDireBeast
-	HunterSpellAMurderOfCrows
-	HunterSpellLynxRush
-	HunterSpellGlaiveToss
-	HunterSpellBarrage
-	HunterSpellPowershot
-	HunterSpellsAll = HunterSpellSteadyShot | HunterSpellCobraShot |
-		HunterSpellArcaneShot | HunterSpellKillCommand | HunterSpellChimeraShot | HunterSpellExplosiveShot |
-		HunterSpellExplosiveTrap | HunterSpellBlackArrow | HunterSpellMultiShot | HunterSpellAimedShot |
-		HunterSpellSerpentSting | HunterSpellKillShot | HunterSpellRapidFire | HunterSpellBestialWrath
-	HunterSpellsTalents = HunterSpellFervor | HunterSpellDireBeast | HunterSpellAMurderOfCrows | HunterSpellLynxRush | HunterSpellGlaiveToss | HunterSpellPowershot | HunterSpellBarrage
+	HunterSpellsAll = HunterSpellAimedShot |
+		HunterSpellArcaneShot | HunterSpellBestialWrath |
+		HunterSpellKillCommand | HunterSpellMultiShot |
+		HunterSpellRapidFire | HunterSpellRaptorStrike |
+		HunterSpellScorpidSting | HunterSpellSerpentSting |
+		HunterSpellSteadyShot | HunterSpellVolley
+	HunterSpellsShotsAndStings = HunterSpellAimedShot |
+		HunterSpellArcaneShot | HunterSpellMultiShot |
+		HunterSpellScorpidSting | HunterSpellSerpentSting |
+		HunterSpellSteadyShot | HunterSpellVolley
 )
 
 // Agent is a generic way to access underlying hunter on any of the agents.

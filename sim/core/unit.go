@@ -162,8 +162,8 @@ type Unit struct {
 	hardcastAction *PendingAction
 
 	// Cached mana return values per tick.
-	manaTickWhileCombat    float64
-	manaTickWhileNotCombat float64
+	manaTickWhileCasting    float64
+	manaTickWhileNotCasting float64
 
 	CastSpeed           float64
 	meleeAttackSpeed    float64
@@ -369,12 +369,12 @@ func (unit *Unit) processDynamicBonus(sim *Simulation, bonus stats.Stats) {
 			unit.currentMana = unit.MaxMana()
 		}
 	}
-	if bonus[stats.MeleeHasteRating] > 0 {
+	if bonus[stats.MeleeHasteRating] != 0 {
 		unit.updateAttackSpeed()
 		unit.updateMeleeAndRangedHaste()
 		unit.AutoAttacks.UpdateSwingTimers(sim)
 	}
-	if bonus[stats.SpellHasteRating] > 0 {
+	if bonus[stats.SpellHasteRating] != 0 {
 		unit.updateCastSpeed()
 	}
 
@@ -643,21 +643,6 @@ func (unit *Unit) MultiplyResourceRegenSpeed(sim *Simulation, amount float64) {
 
 	unit.Env.TriggerDelayedPetInheritance(sim, unit.RegenInheritancePets, func(sim *Simulation, pet *Pet) {
 		pet.MultiplyResourceRegenSpeed(sim, amount)
-	})
-}
-
-func (unit *Unit) AddBonusRangedHitPercent(percentage float64) {
-	unit.OnSpellRegistered(func(spell *Spell) {
-		if spell.ProcMask.Matches(ProcMaskRanged) {
-			spell.BonusHitPercent += percentage
-		}
-	})
-}
-func (unit *Unit) AddBonusRangedCritPercent(percentage float64) {
-	unit.OnSpellRegistered(func(spell *Spell) {
-		if spell.ProcMask.Matches(ProcMaskRanged) {
-			spell.BonusCritPercent += percentage
-		}
 	})
 }
 

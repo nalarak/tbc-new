@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/wowsims/tbc/sim/core/proto"
 )
@@ -250,8 +251,8 @@ func FromUnitStatsProto(unitStatsMessage *proto.UnitStats) Stats {
 		simStats[PhysicalCritPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatMeleeCritPercent]
 		simStats[SpellCritPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatSpellCritPercent]
 		simStats[BlockPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatBlockPercent]
-		simStats[RangedHitPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatRangedHitPercent]
-		simStats[RangedCritPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatRangedCritPercent]
+		simStats[RangedHitPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatRangedHitPercent] - pseudoStatsMessage[proto.PseudoStat_PseudoStatMeleeHitPercent]
+		simStats[RangedCritPercent] = pseudoStatsMessage[proto.PseudoStat_PseudoStatRangedCritPercent] - pseudoStatsMessage[proto.PseudoStat_PseudoStatMeleeCritPercent]
 	}
 
 	return simStats
@@ -437,7 +438,8 @@ type PseudoStats struct {
 	RangedHasteMultiplier float64
 	AttackSpeedMultiplier float64 // Used for real haste effects like Bloodlust that modify resoruce regen and are used for RPPM effects
 
-	SpiritRegenRateCombat float64 // percentage of spirit regen allowed during combat
+	FiveSecondRuleRefreshTime time.Duration // last time a spell was cast
+	SpiritRegenRateCasting    float64       // percentage of spirit regen allowed during casting
 
 	// Both of these are currently only used for innervate.
 	ForceFullSpiritRegen  bool    // If set, automatically uses full spirit regen regardless of FSR refresh time.

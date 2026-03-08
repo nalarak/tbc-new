@@ -34,7 +34,7 @@ npm install
 ## Docker
 Alternatively, install Docker and your workflow will look something like this:
 ```sh
-git clone https://github.com/wowsims/tbc.git
+git clone https://github.com/wowsims/tbc-new.git
 cd tbc
 
 # Build the docker image and install npm dependencies (only need to run these once).

@@ -289,44 +289,40 @@ func applyRaceEffects(agent Agent) {
 			},
 		}
 
+		if character.HasEnergyBar() {
+			baseSpellConfig.ActionID = ActionID{SpellID: 26297}
+			baseSpellConfig.EnergyCost = EnergyCostOptions{
+				Cost: 10,
+			}
+		} else if character.HasRageBar() {
+			baseSpellConfig.ActionID = ActionID{SpellID: 26296}
+			baseSpellConfig.RageCost = RageCostOptions{
+				Cost: 5,
+			}
+		} else if character.HasManaBar() {
+			baseSpellConfig.ActionID = ActionID{SpellID: 20554}
+			baseSpellConfig.ManaCost = ManaCostOptions{
+				FlatCost: int32(character.BaseMana * 0.06),
+			}
+		}
+
 		baseAuraConfig := Aura{
-			ActionID: baseSpellConfig.ActionID,
 			Duration: time.Second * 10,
+			ActionID: baseSpellConfig.ActionID,
 		}
 
 		createBerserkingSpell := func(labelSuffix string, tag int32, percentage float64) {
-			if character.HasEnergyBar() {
-				baseSpellConfig.ActionID = ActionID{SpellID: 26297}.WithTag(tag)
-				baseSpellConfig.EnergyCost = EnergyCostOptions{
-					Cost: 10,
-				}
-			} else if character.HasRageBar() {
-				baseSpellConfig.ActionID = ActionID{SpellID: 26296}.WithTag(tag)
-				baseSpellConfig.RageCost = RageCostOptions{
-					Cost: 5,
-				}
-			} else if character.HasManaBar() {
-				baseSpellConfig.ActionID = ActionID{SpellID: 20554}.WithTag(tag)
-				baseSpellConfig.ManaCost = ManaCostOptions{
-					FlatCost: int32(character.BaseMana * 0.06),
-				}
-			}
-
 			auraConfig := baseAuraConfig
+			auraConfig.ActionID.Tag = tag
 			auraConfig.Label = fmt.Sprintf("Berserking (%s)", labelSuffix)
 
 			berserkingAura := character.RegisterAura(auraConfig)
 			berserkingAura.
-				ApplyOnGain(func(aura *Aura, sim *Simulation) {
-					character.MultiplyCastSpeed(sim, percentage)
-					character.MultiplyAttackSpeed(sim, percentage)
-				}).
-				ApplyOnExpire(func(aura *Aura, sim *Simulation) {
-					character.MultiplyAttackSpeed(sim, 1/percentage)
-					character.MultiplyCastSpeed(sim, 1/percentage)
-				})
+				AttachMultiplyAttackSpeed(percentage).
+				AttachMultiplyCastSpeed(percentage)
 
 			berserkingSpellConfig := baseSpellConfig
+			berserkingSpellConfig.ActionID.Tag = tag
 			berserkingSpellConfig.RelatedSelfBuff = berserkingAura
 			berserkingSpellConfig.ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
 				berserkingAura.Activate(sim)

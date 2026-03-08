@@ -1,6 +1,7 @@
 package dps
 
 import (
+	"github.com/wowsims/tbc/sim/common"
 	_ "github.com/wowsims/tbc/sim/common" // imported to get item effects included.
 	"github.com/wowsims/tbc/sim/core"
 	"github.com/wowsims/tbc/sim/core/proto"
@@ -10,6 +11,7 @@ import (
 
 func init() {
 	RegisterDpsWarrior()
+	common.RegisterAllEffects()
 }
 
 func TestDpsWarrior(t *testing.T) {
@@ -68,7 +70,7 @@ var DefaultConsumables = &proto.ConsumesSpec{
 	PotId:       22838,
 	FlaskId:     22854,
 	FoodId:      27658,
-	ConjuredId:  5512,
+	ConjuredId:  22788,
 	ExplosiveId: 30217,
 	SuperSapper: true,
 	OhImbueId:   29453,

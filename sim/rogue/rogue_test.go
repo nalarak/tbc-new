@@ -3,6 +3,7 @@ package rogue
 import (
 	"testing"
 
+	"github.com/wowsims/tbc/sim/common"
 	_ "github.com/wowsims/tbc/sim/common" // imported to get item effects included.
 	"github.com/wowsims/tbc/sim/core"
 	"github.com/wowsims/tbc/sim/core/proto"
@@ -10,6 +11,7 @@ import (
 
 func init() {
 	RegisterRogue()
+	common.RegisterAllEffects()
 }
 
 func TestRogue(t *testing.T) {

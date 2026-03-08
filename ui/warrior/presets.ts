@@ -16,6 +16,7 @@ export const DefaultPartyBuffs = PartyBuffs.create({
 	battleShout: TristateEffect.TristateEffectImproved,
 	leaderOfThePack: TristateEffect.TristateEffectImproved,
 	trueshotAura: true,
+	totemTwisting: true,
 });
 
 export const DefaultRaidBuffs = RaidBuffs.create({
@@ -43,7 +44,7 @@ export const DefaultConsumables = ConsumesSpec.create({
 	potId: 22838,
 	flaskId: 22854,
 	foodId: 27658,
-	conjuredId: 5512,
+	conjuredId: 22788,
 	explosiveId: 30217,
 	superSapper: true,
 	goblinSapper: true,

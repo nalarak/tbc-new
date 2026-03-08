@@ -683,10 +683,10 @@ func (character *Character) GetPseudoStatsProto() []float64 {
 		// Encounter settings can omit these extraneous fields.
 		proto.PseudoStat_PseudoStatMeleeHitPercent:   character.GetStat(stats.PhysicalHitPercent),
 		proto.PseudoStat_PseudoStatSpellHitPercent:   character.GetStat(stats.SpellHitPercent),
-		proto.PseudoStat_PseudoStatRangedHitPercent:  character.GetStat(stats.RangedHitPercent),
+		proto.PseudoStat_PseudoStatRangedHitPercent:  character.GetStat(stats.RangedHitPercent) + character.GetStat(stats.PhysicalHitPercent),
 		proto.PseudoStat_PseudoStatMeleeCritPercent:  character.GetStat(stats.PhysicalCritPercent),
 		proto.PseudoStat_PseudoStatSpellCritPercent:  character.GetStat(stats.SpellCritPercent),
-		proto.PseudoStat_PseudoStatRangedCritPercent: character.GetStat(stats.RangedCritPercent),
+		proto.PseudoStat_PseudoStatRangedCritPercent: character.GetStat(stats.RangedCritPercent) + character.GetStat(stats.PhysicalCritPercent),
 	}
 }
 

@@ -35,6 +35,7 @@ import { DatabaseFilters, RaidFilterOption, SimSettings as SimSettingsProto, Sou
 import { Database } from './proto_utils/database.js';
 import { Gear } from './proto_utils/gear';
 import { SimResult } from './proto_utils/sim_result.js';
+import { extendPlayerProtoWithMissingEffects } from './proto_utils/utils';
 import { Raid } from './raid.js';
 import { runConcurrentSim, runConcurrentStatWeights } from './sim_concurrent';
 import { RequestTypes, SimSignalManager } from './sim_signal_manager';
@@ -230,33 +231,7 @@ export class Sim {
 					player.equipment = gear.asSpec();
 				}
 
-				// Include consumables in the player db
-				const pdb = player.database!;
-
-				const newConsumables: Consumable[] = [];
-				const newSpellEffects: SpellEffect[] = [];
-				const seenConsumableIds = new Set<number>();
-				const seenEffectIds = new Set<number>();
-				Object.values(player.consumables ?? []).forEach((cid: number) => {
-					if (!cid || seenConsumableIds.has(cid)) return;
-					const consume = this.db.getConsumable(cid);
-					if (!consume) return;
-					seenConsumableIds.add(consume.id);
-					newConsumables.push(consume);
-					for (const eid of consume.effectIds) {
-						if (seenEffectIds.has(eid)) continue;
-						const effect = this.db.getSpellEffect(eid);
-						if (!effect) continue;
-
-						seenEffectIds.add(effect.id);
-						newSpellEffects.push(effect);
-					}
-				});
-
-				// swap in the fresh arrays
-				pdb.consumables = newConsumables;
-				pdb.spellEffects = newSpellEffects;
-				player.database = pdb;
+				extendPlayerProtoWithMissingEffects(player, this.db);
 			});
 		});
 
@@ -472,34 +447,7 @@ export class Sim {
 		player.database = gear.toDatabase(this.db);
 		player.equipment = gear.asSpec();
 
-		// Include consumables in the player db
-		const pdb = player.database!;
-
-		const newConsumables: Consumable[] = [];
-		const newSpellEffects: SpellEffect[] = [];
-		const seenConsumableIds = new Set<number>();
-		const seenEffectIds = new Set<number>();
-		Object.values(player.consumables ?? []).forEach((cid: number) => {
-			if (!cid || seenConsumableIds.has(cid)) return;
-			const consume = this.db.getConsumable(cid);
-			if (!consume) return;
-			seenConsumableIds.add(consume.id);
-			newConsumables.push(consume);
-			for (const eid of consume.effectIds) {
-				if (seenEffectIds.has(eid)) continue;
-				const effect = this.db.getSpellEffect(eid);
-				if (!effect) continue;
-
-				seenEffectIds.add(effect.id);
-				newSpellEffects.push(effect);
-			}
-		});
-
-		// swap in the fresh arrays
-		pdb.consumables = newConsumables;
-		pdb.spellEffects = newSpellEffects;
-		player.database = pdb;
-
+		extendPlayerProtoWithMissingEffects(player, this.db);
 		raidProto.parties[0].players[0] = player;
 
 		const req = ComputeStatsRequest.create({
@@ -540,8 +488,12 @@ export class Sim {
 				.includes(player.getRaidIndex())
 				? [UnitReference.create({ type: UnitType.Player, index: 0 })]
 				: [];
+
+			const playerProto = player.toProto(false, true);
+			extendPlayerProtoWithMissingEffects(playerProto, this.db);
+
 			const request = StatWeightsRequest.create({
-				player: player.toProto(false, true),
+				player: playerProto,
 				raidBuffs: this.raid.getBuffs(),
 				partyBuffs: player.getParty()!.getBuffs(),
 				debuffs: this.raid.getDebuffs(),

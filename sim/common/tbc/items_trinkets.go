@@ -196,11 +196,11 @@ func init() {
 		character := agent.GetCharacter()
 
 		lightningBolt := character.RegisterSpell(core.SpellConfig{
-			ActionID:     core.ActionID{SpellID: 42372},
+			ActionID:     core.ActionID{SpellID: 37661},
 			SpellSchool:  core.SpellSchoolNature,
 			ProcMask:     core.ProcMaskEmpty,
 			Flags:        core.SpellFlagPassiveSpell | core.SpellFlagIgnoreAttackerModifiers,
-			MissileSpeed: 28, // this is a guess atm
+			MissileSpeed: 20,
 
 			DamageMultiplier: 1,
 			CritMultiplier:   character.DefaultSpellCritMultiplier(),
@@ -348,7 +348,7 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterProc(27683, procAura)
+		character.ItemSwap.RegisterProc(30621, procAura)
 	})
 
 	// Sextant of Unstable Currents
@@ -539,6 +539,36 @@ func init() {
 		eligibleSlots := character.ItemSwap.EligibleSlotsForItem(34427)
 		character.AddStatProcBuff(45041, aura, false, eligibleSlots)
 		character.ItemSwap.RegisterProc(34427, triggerAura)
+	})
+
+	// Commendation of Kael'thas
+	core.NewItemEffect(34473, func(agent core.Agent) {
+		character := agent.GetCharacter()
+
+		aura := character.NewTemporaryStatsAura(
+			"Evasive Maneuvers",
+			core.ActionID{SpellID: 45058},
+			stats.Stats{stats.DodgeRating: 152},
+			time.Second*10,
+		)
+
+		procAura := character.MakeProcTriggerAura(core.ProcTrigger{
+			Name:               "Evasive Maneuvers",
+			ActionID:           core.ActionID{ItemID: 34473},
+			ProcMask:           core.ProcMaskMelee,
+			ICD:                time.Second * 30,
+			RequireDamageDealt: true,
+			TriggerImmediately: true,
+			Outcome:            core.OutcomeLanded,
+			Callback:           core.CallbackOnSpellHitTaken,
+			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+				if character.CurrentHealthPercent() < 0.35 {
+					aura.Activate(sim)
+				}
+			},
+		})
+
+		character.ItemSwap.RegisterProc(34473, procAura)
 	})
 
 	// Figurine - Empyrean Tortoise

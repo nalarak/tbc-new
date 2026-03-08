@@ -294,7 +294,7 @@ func (rogue *Rogue) registerDeadliness() {
 		return
 	}
 
-	rogue.MultiplyStat(stats.AttackPower, 1+0.2*float64(rogue.Talents.Deadliness))
+	rogue.MultiplyStat(stats.AttackPower, 1+0.02*float64(rogue.Talents.Deadliness))
 }
 
 func (rogue *Rogue) registerPremeditation() {
@@ -390,13 +390,13 @@ func (rogue *Rogue) registerShadowstep() {
 		ActionID: actionID,
 		Duration: time.Second * 10,
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.ClassSpellMask&RogueSpellsAll != 0 {
+			if spell.ClassSpellMask&RogueSpellActives != 0 {
 				aura.Deactivate(sim)
 			}
 		},
 	}).AttachSpellMod(core.SpellModConfig{
 		Kind:       core.SpellMod_DamageDone_Flat,
-		ClassMask:  RogueSpellsAll,
+		ClassMask:  RogueSpellActives,
 		FloatValue: 0.2,
 	})
 

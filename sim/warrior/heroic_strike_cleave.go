@@ -6,7 +6,7 @@ import (
 
 func (war *Warrior) registerHeroicStrike() {
 	spell := war.RegisterSpell(core.SpellConfig{
-		ActionID:       core.ActionID{SpellID: 30324},
+		ActionID:       core.ActionID{SpellID: 29707},
 		SpellSchool:    core.SpellSchoolPhysical,
 		ProcMask:       core.ProcMaskMeleeMH,
 		Flags:          core.SpellFlagMeleeMetrics,
