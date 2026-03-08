@@ -44,10 +44,10 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 			// Add 1.8% because pets aren't affected by that component of crit suppression.
 			stats.MeleeCritRating: (1.1515 + 1.8) * core.PhysicalCritRatingPerCritPercent,
 		},
-		NonHitExpStatInheritance: hunter.makeStatInheritance(),
-		EnabledOnStart:           true,
-		IsGuardian:               false,
-		StartsAtOwnerDistance:    true,
+		StatInheritance:       hunter.makeStatInheritance(),
+		EnabledOnStart:        true,
+		IsGuardian:            false,
+		StartsAtOwnerDistance: true,
 	}
 	hp := &HunterPet{
 		Pet:         core.NewPet(conf),
