@@ -5012,21 +5012,6 @@ func RegisterAllProcs() {
 	//       This can be ignored if the effect has already been implemented.
 	//       With next db run the item will be removed if implemented.
 	//
-	// Chance on melee attack to gain 10 Energy or 5 Rage.
-	// https://www.wowhead.com/tbc/spell=36070
-	// shared.NewProcStatBonusEffectWithVariants(shared.ProcStatBonusEffect{
-	//	Callback:           core.CallbackEmpty,
-	//	ProcMask:           core.ProcMaskUnknown,
-	//	Outcome:            core.OutcomeEmpty,
-	//	RequireDamageDealt: false
-	// }, []shared.ItemVariant{
-	//	{ItemID: 29996, ItemName: "Rod of the Sun King"},
-	// })
-
-	// TODO: Manual implementation required
-	//       This can be ignored if the effect has already been implemented.
-	//       With next db run the item will be removed if implemented.
-	//
 	// Reduces the duration of any Silence or Interrupt effects used against the wearer by 20%. This effect does
 	// not stack with other similar effects.
 	// https://www.wowhead.com/tbc/spell=35126

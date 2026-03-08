@@ -788,6 +788,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestRogue-AllItems-RodoftheSunKing-29996"
+ value: {
+  dps: 1984.75943
+  tps: 1409.17919
+ }
+}
+dps_results: {
  key: "TestRogue-AllItems-Romulo'sPoisonVial-28579"
  value: {
   dps: 1948.80136
