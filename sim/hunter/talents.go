@@ -214,7 +214,7 @@ func (hunter *Hunter) registerBestialWrath() {
 		},
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return hunter.Pet != nil && hunter.GCD.IsReady(sim)
+			return hunter.GCD.IsReady(sim)
 		},
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
@@ -293,10 +293,6 @@ func (hunter *Hunter) registerGoForTheThroat() {
 		ProcMask: core.ProcMaskRanged,
 
 		Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if hunter.Pet == nil {
-				return
-			}
-
 			hunter.Pet.AddFocus(sim, amount, metrics)
 		},
 	})
@@ -315,7 +311,7 @@ func (hunter *Hunter) registerImprovedArcaneShot() {
 }
 
 func (hunter *Hunter) registerAimedShot() {
-	hunter.AimedShot = hunter.RegisterSpell(core.SpellConfig{
+	hunter.AimedShot = hunter.RegisterRangedSpell(core.SpellConfig{
 		ActionID:       core.ActionID{SpellID: 27065},
 		SpellSchool:    core.SpellSchoolPhysical,
 		ClassSpellMask: HunterSpellAimedShot,
@@ -333,15 +329,15 @@ func (hunter *Hunter) registerAimedShot() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * 2500,
+				CastTime: time.Millisecond * 3000,
 			},
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
 				Duration: time.Second * 6,
 			},
 			IgnoreHaste: true,
-			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				hunter.AutoAttacks.StopRangedUntil(sim, sim.CurrentTime+spell.CastTime())
+			CastTime: func(spell *core.Spell) time.Duration {
+				return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.TotalRangedHasteMultiplier())
 			},
 		},
 
@@ -351,13 +347,10 @@ func (hunter *Hunter) registerAimedShot() {
 		BonusCoefficient: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.2*spell.RangedAttackPower() +
+			baseDamage := 0.2*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
+				hunter.talonOfAlarBonus() +
 				870
-
-			if hunter.TalonOfAlarAura.IsActive() {
-				baseDamage += 40
-			}
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 
@@ -421,12 +414,8 @@ func (hunter *Hunter) registerCombatExperience() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.Agility, 1+0.01*float64(hunter.Talents.CombatExperience)),
-	)
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.Intellect, 1+0.03*float64(hunter.Talents.CombatExperience)),
-	)
+	hunter.MultiplyStat(stats.Agility, 1+0.01*float64(hunter.Talents.CombatExperience))
+	hunter.MultiplyStat(stats.Intellect, 1+0.03*float64(hunter.Talents.CombatExperience))
 }
 
 func (hunter *Hunter) registerRangedWeaponSpecialization() {
@@ -434,11 +423,10 @@ func (hunter *Hunter) registerRangedWeaponSpecialization() {
 		return
 	}
 
-	bonus := 1 + 0.01*float64(hunter.Talents.RangedWeaponSpecialization)
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.ProcMask.Matches(core.ProcMaskRanged) {
-			spell.DamageMultiplier *= bonus
-		}
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Pct,
+		ProcMask:   core.ProcMaskRanged,
+		FloatValue: 0.01 * float64(hunter.Talents.RangedWeaponSpecialization),
 	})
 }
 
@@ -447,9 +435,7 @@ func (hunter *Hunter) registerCarefulAim() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicStatDependency(stats.Intellect, stats.RangedAttackPower, 0.15*float64(hunter.Talents.CarefulAim)),
-	)
+	hunter.AddStatDependency(stats.Intellect, stats.RangedAttackPower, 0.15*float64(hunter.Talents.CarefulAim))
 }
 
 func (hunter *Hunter) registerImprovedBarrage() {
@@ -469,9 +455,7 @@ func (hunter *Hunter) registerMasterMarksman() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.RangedAttackPower, 0.02*float64(hunter.Talents.MasterMarksman)),
-	)
+	hunter.MultiplyStat(stats.RangedAttackPower, 1+0.02*float64(hunter.Talents.MasterMarksman))
 }
 
 func (hunter *Hunter) registerSlaying() {
@@ -506,10 +490,19 @@ func (hunter *Hunter) registerHawkEye() {
 		ranged.MaxRange += bonusRange
 	}
 
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.ProcMask.Matches(core.ProcMaskRanged) && spell.MaxRange > 0 {
-			spell.MaxRange += bonusRange
-		}
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:     core.SpellMod_Custom,
+		ProcMask: core.ProcMaskRanged,
+		ApplyCustom: func(mod *core.SpellMod, spell *core.Spell) {
+			if spell.MaxRange > 0 {
+				spell.MaxRange += bonusRange
+			}
+		},
+		RemoveCustom: func(mod *core.SpellMod, spell *core.Spell) {
+			if spell.MaxRange > 0 {
+				spell.MaxRange -= bonusRange
+			}
+		},
 	})
 }
 
@@ -530,9 +523,7 @@ func (hunter *Hunter) registerSurvivalist() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.Health, 1+0.02*float64(hunter.Talents.Survivalist)),
-	)
+	hunter.MultiplyStat(stats.Health, 1+0.02*float64(hunter.Talents.Survivalist))
 }
 
 func (hunter *Hunter) registerSurefooted() {
@@ -548,12 +539,8 @@ func (hunter *Hunter) registerSurvivalInstincts() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.AttackPower, 1+0.02*float64(hunter.Talents.SurvivalInstincts)),
-	)
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.RangedAttackPower, 1+0.02*float64(hunter.Talents.SurvivalInstincts)),
-	)
+	hunter.MultiplyStat(stats.AttackPower, 1+0.02*float64(hunter.Talents.SurvivalInstincts))
+	hunter.MultiplyStat(stats.RangedAttackPower, 1+0.02*float64(hunter.Talents.SurvivalInstincts))
 }
 
 func (hunter *Hunter) registerKillerInstinct() {
@@ -581,9 +568,7 @@ func (hunter *Hunter) registerLightningReflexes() {
 		return
 	}
 
-	hunter.StatDependencyManager.EnableDynamicStatDep(
-		hunter.NewDynamicMultiplyStat(stats.Agility, 1+0.03*float64(hunter.Talents.LightningReflexes)),
-	)
+	hunter.MultiplyStat(stats.Agility, 1+0.03*float64(hunter.Talents.LightningReflexes))
 }
 
 func (hunter *Hunter) registerThrillOfTheHunt() {

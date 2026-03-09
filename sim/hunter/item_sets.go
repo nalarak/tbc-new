@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wowsims/tbc/sim/core"
+	"github.com/wowsims/tbc/sim/core/proto"
 	"github.com/wowsims/tbc/sim/core/stats"
 )
 
@@ -103,6 +104,64 @@ var ItemSetGronnstalkersArmor = core.NewItemSet(core.ItemSet{
 })
 
 func init() {
+	// Thori'dal, the Star's Fury
+	core.NewItemEffect(ThoridalTheStarsFuryItemID, func(agent core.Agent) {
+		hunter := agent.(HunterAgent).GetHunter()
+
+		wep := hunter.GetRangedWeapon()
+		isEquipped := wep != nil && wep.ID == ThoridalTheStarsFuryItemID
+		buildPhase := core.Ternary(isEquipped, core.CharacterBuildPhaseGear, core.CharacterBuildPhaseNone)
+
+		hasteAura := hunter.RegisterAura(core.Aura{
+			Label:      "Legendary Bow Haste",
+			ActionID:   core.ActionID{SpellID: 44972},
+			Duration:   core.NeverExpires,
+			BuildPhase: buildPhase,
+
+			// Tried to do this with ExclusiveEffects but damn that was wonky and didn't work right...
+			OnGain: func(aura *core.Aura, sim *core.Simulation) {
+				if hunter.quiverBonusAura != nil {
+					hunter.quiverBonusAura.Deactivate(sim)
+				}
+			},
+			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+				if hunter.quiverBonusAura != nil && sim.CurrentTime > 0 {
+					hunter.quiverBonusAura.Activate(sim)
+				}
+			},
+		}).AttachMultiplicativePseudoStatBuff(
+			&hunter.PseudoStats.RangedSpeedMultiplier,
+			quiverHasteMultipliers[proto.HunterOptions_Speed15],
+		)
+
+		ammoAura := hunter.RegisterAura(core.Aura{
+			Label:    "Requires No Ammo",
+			ActionID: core.ActionID{SpellID: 46699},
+			Duration: core.NeverExpires,
+
+			OnGain: func(aura *core.Aura, sim *core.Simulation) {
+				hunter.AmmoDamageBonus = 0
+			},
+		})
+
+		if isEquipped {
+			core.MakePermanent(hasteAura)
+			core.MakePermanent(ammoAura)
+		}
+
+		hunter.RegisterItemSwapCallback([]proto.ItemSlot{proto.ItemSlot_ItemSlotRanged}, func(sim *core.Simulation, _ proto.ItemSlot) {
+			if ranged, weapon := hunter.AutoAttacks.Ranged(), hunter.GetRangedWeapon(); ranged != nil &&
+				(weapon == nil || weapon.ID != ThoridalTheStarsFuryItemID) {
+				hunter.AmmoDamageBonus = hunter.AmmoDPS * ranged.SwingSpeed
+				ranged.BaseDamageMin += hunter.AmmoDamageBonus
+				ranged.BaseDamageMax += hunter.AmmoDamageBonus
+			}
+		})
+
+		hunter.ItemSwap.RegisterProc(ThoridalTheStarsFuryItemID, hasteAura)
+		hunter.ItemSwap.RegisterProc(ThoridalTheStarsFuryItemID, ammoAura)
+	})
+
 	// Beast-tamer's Shoulders
 	core.NewItemEffect(30892, func(agent core.Agent) {
 		hunter := agent.(HunterAgent).GetHunter()
@@ -115,7 +174,6 @@ func init() {
 	const BlackBowOfTheBetrayerItemID = 32336
 	core.NewItemEffect(BlackBowOfTheBetrayerItemID, func(agent core.Agent) {
 		hunter := agent.(HunterAgent).GetHunter()
-		eligibleSlots := hunter.ItemSwap.EligibleSlotsForItem(BlackBowOfTheBetrayerItemID)
 
 		manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 29471})
 
@@ -131,7 +189,7 @@ func init() {
 			},
 		})
 
-		hunter.ItemSwap.RegisterProcWithSlots(BlackBowOfTheBetrayerItemID, procAura, eligibleSlots)
+		hunter.ItemSwap.RegisterProc(BlackBowOfTheBetrayerItemID, procAura)
 	})
 
 	// Ashtongue Talisman of Swiftness
@@ -171,7 +229,6 @@ func init() {
 	const TalonOfAlarItemID = 30448
 	core.NewItemEffect(TalonOfAlarItemID, func(agent core.Agent) {
 		hunter := agent.(HunterAgent).GetHunter()
-		eligibleSlots := hunter.ItemSwap.EligibleSlotsForItem(TalonOfAlarItemID)
 
 		hunter.TalonOfAlarAura = hunter.RegisterAura(core.Aura{
 			Label:    "Shot Power",
@@ -191,8 +248,15 @@ func init() {
 			},
 		})
 
-		hunter.ItemSwap.RegisterProcWithSlots(TalonOfAlarItemID, procAura, eligibleSlots)
+		hunter.ItemSwap.RegisterProc(TalonOfAlarItemID, procAura)
 	})
+}
+
+func (hunter *Hunter) talonOfAlarBonus() float64 {
+	if hunter.TalonOfAlarAura.IsActive() {
+		return 40
+	}
+	return 0
 }
 
 func (hunter *Hunter) addPvpGloves() {

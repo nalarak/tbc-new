@@ -142,22 +142,23 @@ func init() {
 	})
 
 	// Scopes
-	// The ratings for these don't exist, so just apply a spellmod for Ranged-flagged things
 	core.NewEnchantEffect(2523, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		character.AddStat(stats.RangedHitPercent, 30.0/core.PhysicalHitRatingPerHitPercent)
 	})
 
 	core.NewEnchantEffect(2722, func(agent core.Agent) {
-		w := agent.GetCharacter().AutoAttacks.Ranged()
-		w.BaseDamageMin += 10
-		w.BaseDamageMax += 10
+		character := agent.GetCharacter()
+		ranged := character.AutoAttacks.Ranged()
+		ranged.BaseDamageMin += 10
+		ranged.BaseDamageMax += 10
 	})
 
 	core.NewEnchantEffect(2723, func(agent core.Agent) {
-		w := agent.GetCharacter().AutoAttacks.Ranged()
-		w.BaseDamageMin += 12
-		w.BaseDamageMax += 12
+		character := agent.GetCharacter()
+		ranged := character.AutoAttacks.Ranged()
+		ranged.BaseDamageMin += 12
+		ranged.BaseDamageMax += 12
 	})
 
 	core.NewEnchantEffect(2724, func(agent core.Agent) {

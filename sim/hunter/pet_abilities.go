@@ -62,7 +62,7 @@ func (hp *HunterPet) registerKillCommandSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := hp.MHWeaponDamage(sim, spell.MeleeAttackPower()) + 127
+			baseDamage := hp.MHWeaponDamage(sim, spell.MeleeAttackPower(target)) + 127
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})
@@ -90,7 +90,6 @@ func (hp *HunterPet) newBite() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplierAdditive: 1,
 		DamageMultiplier:         1,
 		CritMultiplier:           hp.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier:         1,
@@ -124,7 +123,6 @@ func (hp *HunterPet) newClaw() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplierAdditive: 1,
 		DamageMultiplier:         1,
 		CritMultiplier:           hp.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier:         1,
@@ -158,7 +156,6 @@ func (hp *HunterPet) newGore() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplierAdditive: 1,
 		DamageMultiplier:         1,
 		CritMultiplier:           hp.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier:         1,
@@ -169,7 +166,7 @@ func (hp *HunterPet) newGore() *core.Spell {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := hp.CalcAndRollDamageRange(sim, 37, 61)
-			if sim.RandomFloat("Gore") < 0.5 {
+			if sim.Proc(0.5, "Gore") {
 				baseDamage *= 2
 			}
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
@@ -194,7 +191,6 @@ func (hp *HunterPet) newLightningBreath() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplierAdditive: 1,
 		DamageMultiplier:         1,
 		CritMultiplier:           hp.DefaultSpellCritMultiplier(),
 		ThreatMultiplier:         1,
@@ -230,7 +226,6 @@ func (hp *HunterPet) newScreech() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplierAdditive: 1,
 		DamageMultiplier:         1,
 		CritMultiplier:           hp.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier:         1,

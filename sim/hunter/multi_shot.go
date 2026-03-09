@@ -7,7 +7,7 @@ import (
 )
 
 func (hunter *Hunter) registerMultiShotSpell() {
-	hunter.MultiShot = hunter.RegisterSpell(core.SpellConfig{
+	hunter.MultiShot = hunter.RegisterRangedSpell(core.SpellConfig{
 		ActionID:       core.ActionID{SpellID: 27021},
 		SpellSchool:    core.SpellSchoolPhysical,
 		ProcMask:       core.ProcMaskRangedSpecial,
@@ -25,21 +25,12 @@ func (hunter *Hunter) registerMultiShotSpell() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: 1,
+				CastTime: time.Millisecond * 500,
 			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
 				Duration: time.Second * 10,
-			},
-
-			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				cast.CastTime = spell.CastTime()
-				hunter.AutoAttacks.StopRangedUntil(sim, sim.CurrentTime+cast.CastTime)
-			},
-
-			CastTime: func(spell *core.Spell) time.Duration {
-				return hunter.AutoAttacks.RangedSwingWindup()
 			},
 		},
 
@@ -48,14 +39,11 @@ func (hunter *Hunter) registerMultiShotSpell() {
 		ThreatMultiplier: 1,
 		BonusCoefficient: 1,
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
-			baseDamage := spell.RangedAttackPower()*0.2 +
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			baseDamage := spell.RangedAttackPower(target)*0.2 +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
+				hunter.talonOfAlarBonus() +
 				205
-
-			if hunter.TalonOfAlarAura.IsActive() {
-				baseDamage += 40
-			}
 
 			spell.CalcAoeDamage(sim, baseDamage, spell.OutcomeRangedHitAndCrit)
 

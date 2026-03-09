@@ -191,6 +191,41 @@ func init() {
 		character.ItemSwap.RegisterProc(28034, procAura)
 	})
 
+	// Romulo's Poison Vial
+	core.NewItemEffect(28579, func(agent core.Agent) {
+		character := agent.GetCharacter()
+
+		spell := character.RegisterSpell(core.SpellConfig{
+			ActionID:    core.ActionID{SpellID: 34587},
+			SpellSchool: core.SpellSchoolNature,
+
+			ProcMask: core.ProcMaskEmpty,
+			Flags:    core.SpellFlagPassiveSpell | core.SpellFlagNoOnCastComplete,
+
+			DamageMultiplier: 1,
+			ThreatMultiplier: 1,
+
+			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+				baseDamage := sim.Roll(222, 332)
+				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
+			},
+		})
+
+		procAura := character.MakeProcTriggerAura(core.ProcTrigger{
+			Name:               "Romulo's Poison Vial",
+			ActionID:           core.ActionID{ItemID: 28579},
+			DPM:                character.NewLegacyPPMManager(1, core.ProcMaskMeleeOrRanged),
+			RequireDamageDealt: true,
+			Outcome:            core.OutcomeLanded,
+			Callback:           core.CallbackOnSpellHitDealt,
+			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+				spell.Cast(sim, result.Target)
+			},
+		})
+
+		character.ItemSwap.RegisterProc(28579, procAura)
+	})
+
 	// The Lightning Capacitor
 	core.NewItemEffect(28785, func(agent core.Agent) {
 		character := agent.GetCharacter()
@@ -210,11 +245,16 @@ func init() {
 					baseDamage := sim.Roll(694, 806)
 					//https://www.wowhead.com/tbc/item=28785/the-lightning-capacitor#comments
 					//It can crit, may need some testing
-					spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
+					spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 				})
 
 			},
 		})
+
+		icd := core.Cooldown{
+			Timer:    character.NewTimer(),
+			Duration: time.Millisecond * 2500,
+		}
 
 		lightningCapacitorAura := character.RegisterAura(core.Aura{
 			Label:     "Electrical Charge",
@@ -226,6 +266,7 @@ func init() {
 					aura.SetStacks(sim, newStacks%3)
 					aura.Deactivate(sim)
 					lightningBolt.Proc(sim, character.CurrentTarget)
+					icd.Use(sim)
 				}
 			},
 		})
@@ -234,10 +275,13 @@ func init() {
 			Name:     "The Lightning Capacitor",
 			ActionID: core.ActionID{ItemID: 28785},
 			ProcMask: core.ProcMaskSpellOrSpellProc,
-			ICD:      time.Millisecond * 2500,
 			Outcome:  core.OutcomeCrit,
 			Callback: core.CallbackOnSpellHitDealt,
 			Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				if !icd.IsReady(sim) {
+					return
+				}
+
 				lightningCapacitorAura.Activate(sim)
 				lightningCapacitorAura.AddStack(sim)
 			},

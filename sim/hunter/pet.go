@@ -44,10 +44,10 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 			// Add 1.8% because pets aren't affected by that component of crit suppression.
 			stats.MeleeCritRating: (1.1515 + 1.8) * core.PhysicalCritRatingPerCritPercent,
 		},
-		NonHitExpStatInheritance: hunter.makeStatInheritance(),
-		EnabledOnStart:           true,
-		IsGuardian:               false,
-		StartsAtOwnerDistance:    true,
+		StatInheritance:       hunter.makeStatInheritance(),
+		EnabledOnStart:        true,
+		IsGuardian:            false,
+		StartsAtOwnerDistance: true,
 	}
 	hp := &HunterPet{
 		Pet:         core.NewPet(conf),
@@ -58,7 +58,7 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 	hp.AddStatDependency(stats.Strength, stats.AttackPower, 2.0)
 	hp.AddStatDependency(stats.Agility, stats.PhysicalCritPercent, core.CritPerAgiMaxLevel[proto.Class_ClassWarrior])
 
-	hp.EnableFocusBar(100, 1.0+0.5*float64(hp.hunterOwner.Talents.BestialDiscipline), false, func(sim *core.Simulation, focus float64) {}, false)
+	hp.EnableFocusBar(1.0 + 0.5*float64(hp.hunterOwner.Talents.BestialDiscipline))
 
 	hp.EnableAutoAttacks(hp, core.AutoAttackOptions{
 		MainHand: core.Weapon{

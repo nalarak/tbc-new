@@ -471,10 +471,8 @@ export class ActionId {
 				}
 				break;
 			case 'Berserking':
-				if (tag == 1) {
-					name += ' (10%)';
-				} else if (tag == 2) {
-					name += ' (30%)';
+				if (tag > 0) {
+					name += ` (${10 + ((tag - 1) * 5)}%)`;
 				}
 				break;
 			case 'Elemental Mastery':
@@ -940,4 +938,6 @@ export const resourceTypeToIcon: Record<ResourceType, string> = {
 };
 
 // Use this to connect a buff row to a cast row in the timeline view
-export const buffAuraToSpellIdMap: Record<number, ActionId> = {};
+export const buffAuraToSpellIdMap: Record<number, ActionId> = {
+	34471: ActionId.fromSpellId(19574), // Bestial Wrath -> The Beast Within
+};

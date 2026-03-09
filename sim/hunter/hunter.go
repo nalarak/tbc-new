@@ -11,6 +11,7 @@ import (
 const (
 	HunterBaseMaxRange         = 35
 	ThoridalTheStarsFuryItemID = 34334
+	QuiverHasteCategory        = "QuiverHaste"
 )
 
 var TalentTreeSizes = [3]int{21, 20, 24}
@@ -79,6 +80,8 @@ type Hunter struct {
 	Talents *proto.HunterTalents
 	Options *proto.HunterOptions
 
+	windFuryEnabled bool
+
 	Pet *HunterPet
 
 	AmmoDPS         float64
@@ -107,6 +110,7 @@ type Hunter struct {
 	RapidFireAura        *core.Aura
 	TalonOfAlarAura      *core.Aura
 	TheBeastWithinAura   *core.Aura
+	quiverBonusAura      *core.Aura
 }
 
 func (hunter *Hunter) GetCharacter() *core.Character {
@@ -156,43 +160,16 @@ func NewHunter(character *core.Character, options *proto.Player, hunterOptions *
 
 	hunter.EnableManaBar()
 
+	rangedSlot := hunter.GetRangedWeapon()
+	hunter.applyAmmoDPS()
+	hunter.applyQuiverBonus(rangedSlot)
+
 	rangedWeapon := hunter.WeaponFromRanged(hunter.DefaultMeleeCritMultiplier())
-	hunter.PseudoStats.RangedSpeedMultiplier = 1.0
-	if wep := hunter.GetRangedWeapon(); wep != nil && wep.ID == ThoridalTheStarsFuryItemID {
-		hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
-	} else {
-		switch hunter.Options.Ammo {
-		case proto.HunterOptions_TimelessArrow:
-			hunter.AmmoDPS = 53
-		case proto.HunterOptions_MysteriousArrow:
-			hunter.AmmoDPS = 46.5
-		case proto.HunterOptions_AdamantiteStinger:
-			hunter.AmmoDPS = 43
-		case proto.HunterOptions_WardensArrow:
-			hunter.AmmoDPS = 37
-		case proto.HunterOptions_HalaaniRazorshaft:
-			hunter.AmmoDPS = 34
-		case proto.HunterOptions_BlackflightArrow:
-			hunter.AmmoDPS = 32
-		}
+
+	if rangedSlot == nil || rangedSlot.ID != ThoridalTheStarsFuryItemID {
 		hunter.AmmoDamageBonus = hunter.AmmoDPS * rangedWeapon.SwingSpeed
 		rangedWeapon.BaseDamageMin += hunter.AmmoDamageBonus
 		rangedWeapon.BaseDamageMax += hunter.AmmoDamageBonus
-
-		switch hunter.Options.QuiverBonus {
-		case proto.HunterOptions_Speed10:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.1
-		case proto.HunterOptions_Speed11:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.11
-		case proto.HunterOptions_Speed12:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.12
-		case proto.HunterOptions_Speed13:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.13
-		case proto.HunterOptions_Speed14:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.14
-		case proto.HunterOptions_Speed15:
-			hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
-		}
 	}
 
 	hunter.EnableAutoAttacks(hunter, core.AutoAttackOptions{
@@ -212,6 +189,84 @@ func NewHunter(character *core.Character, options *proto.Player, hunterOptions *
 	hunter.Pet = hunter.NewHunterPet()
 
 	return hunter
+}
+
+var quiverHasteMultipliers = map[proto.HunterOptions_QuiverBonus]float64{
+	proto.HunterOptions_Speed10: 1.1,
+	proto.HunterOptions_Speed11: 1.11,
+	proto.HunterOptions_Speed12: 1.12,
+	proto.HunterOptions_Speed13: 1.13,
+	proto.HunterOptions_Speed14: 1.14,
+	proto.HunterOptions_Speed15: 1.15,
+}
+
+var quiverHasteSpellIDs = map[proto.HunterOptions_QuiverBonus]int32{
+	proto.HunterOptions_Speed10: 29418,
+	proto.HunterOptions_Speed11: 29417,
+	proto.HunterOptions_Speed12: 29416,
+	proto.HunterOptions_Speed13: 29413,
+	proto.HunterOptions_Speed14: 29415,
+	proto.HunterOptions_Speed15: 29414,
+}
+
+func (hunter *Hunter) applyQuiverBonus(weapon *core.Item) {
+	if hunter.Options.QuiverBonus == proto.HunterOptions_QuiverNone {
+		return
+	}
+
+	isThoridalEquipped := weapon != nil && weapon.ID == ThoridalTheStarsFuryItemID
+	buildPhase := core.Ternary(
+		isThoridalEquipped,
+		core.CharacterBuildPhaseNone,
+		core.CharacterBuildPhaseGear)
+
+	hunter.quiverBonusAura = hunter.RegisterAura(core.Aura{
+		Label:      "Haste",
+		ActionID:   core.ActionID{SpellID: quiverHasteSpellIDs[hunter.Options.QuiverBonus]},
+		Duration:   core.NeverExpires,
+		BuildPhase: buildPhase,
+	}).AttachMultiplicativePseudoStatBuff(
+		&hunter.PseudoStats.RangedSpeedMultiplier,
+		quiverHasteMultipliers[hunter.Options.QuiverBonus],
+	)
+
+	if !isThoridalEquipped {
+		core.MakePermanent(hunter.quiverBonusAura)
+	}
+}
+
+func (hunter *Hunter) applyAmmoDPS() {
+	switch hunter.Options.Ammo {
+	case proto.HunterOptions_TimelessArrow:
+		hunter.AmmoDPS = 53
+	case proto.HunterOptions_MysteriousArrow:
+		hunter.AmmoDPS = 46.5
+	case proto.HunterOptions_AdamantiteStinger:
+		hunter.AmmoDPS = 43
+	case proto.HunterOptions_WardensArrow:
+		hunter.AmmoDPS = 37
+	case proto.HunterOptions_HalaaniRazorshaft:
+		hunter.AmmoDPS = 34
+	case proto.HunterOptions_BlackflightArrow:
+		hunter.AmmoDPS = 32
+	}
+}
+
+func (hunter *Hunter) RegisterRangedSpell(config core.SpellConfig) *core.Spell {
+	if config.Cast.ModifyCast == nil {
+		config.Cast.ModifyCast = func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
+			cast.CastTime = spell.CastTime()
+			hunter.AutoAttacks.StopRangedUntil(sim, sim.CurrentTime+cast.CastTime)
+		}
+	}
+
+	if config.Cast.CastTime == nil {
+		config.Cast.CastTime = func(spell *core.Spell) time.Duration {
+			return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.TotalRangedHasteMultiplier())
+		}
+	}
+
+	return hunter.RegisterSpell(config)
 }
 
 func (hunter *Hunter) Initialize() {
@@ -249,9 +304,14 @@ func (hunter *Hunter) AddPartyBuffs(partyBuffs *proto.PartyBuffs) {
 	if hunter.Talents.TrueshotAura {
 		partyBuffs.TrueshotAura = true
 	}
+
+	if partyBuffs.WindfuryTotem != proto.TristateEffect_TristateEffectMissing {
+		hunter.windFuryEnabled = true
+	}
 }
 
 func (hunter *Hunter) Reset(_ *core.Simulation) {
+	hunter.killCommandEnabledUntil = 0
 }
 
 func (hunter *Hunter) OnEncounterStart(sim *core.Simulation) {

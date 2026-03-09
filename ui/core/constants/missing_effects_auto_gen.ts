@@ -1801,12 +1801,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		28579, // Romulo's Poison Vial
-		[
-			"Your melee and ranged attacks have a chance to inject poison into your target dealing 332 Nature damage.", // 34587 - https://www.wowhead.com/tbc/spell=34587
-		]
-	],
-	[
 		28590, // Ribbon of Sacrifice
 		[
 			"For the next 20s, your direct heals grant Fecundity to your target, increasing the healing received by the target by up to 30. Fecundity lasts 10s and stacks up to 5 times.", // 38332 - https://www.wowhead.com/tbc/spell=38332
@@ -2062,12 +2056,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		29613, // General's Lamellar Gloves
 		[
 			"Increases the Holy damage bonus of your Judgement of the Crusader by 20.", // 23300 - https://www.wowhead.com/tbc/spell=23300
-		]
-	],
-	[
-		29996, // Rod of the Sun King
-		[
-			"Chance on melee attack to gain 10 Energy or 5 Rage.", // 36070 - https://www.wowhead.com/tbc/spell=36070
 		]
 	],
 	[
@@ -2908,13 +2896,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		33953, // Vengeful Gladiator's Totem of Survival
 		[
 			"Your Earth Shock, Flame Shock, and Frost Shock abilities also grant you 34 resilience rating for 6s.", // 43862 - https://www.wowhead.com/tbc/spell=43862
-		]
-	],
-	[
-		34334, // Thori'dal, the Stars' Fury
-		[
-			"Increases ranged attack speed by 15%. Does not stack with quiver or ammo pouch haste effects.", // 44972 - https://www.wowhead.com/tbc/spell=44972
-			"Thori'dal generates magical arrows when the bow string is drawn. Does not use ammo.", // 46699 - https://www.wowhead.com/tbc/spell=46699
 		]
 	],
 	[

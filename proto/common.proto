@@ -25,10 +25,10 @@ message ProtoVersion {
 	// protos need to define an api_version field so that the UI code knows
 	// to up-convert these protos to the new format whenever api_version is
 	// missing (0) or lower than current_version_number.
-	option (current_version_number) = 3;
+	option (current_version_number) = 4;
 
 	// The actual field value is only used within unit tests.
-	int32 saved_version_number = 3;
+	int32 saved_version_number = 1;
 }
 
 message ScalingItemProperties {
@@ -267,12 +267,12 @@ enum PseudoStat {
 	PseudoStatParryPercent = 5;
 
 	// Spell School Hit
-	PseudoStatSchoolHitArcane = 6;
-	PseudoStatSchoolHitFire = 7;
-	PseudoStatSchoolHitFrost = 8;
-	PseudoStatSchoolHitHoly = 9;
-	PseudoStatSchoolHitNature = 10;
-	PseudoStatSchoolHitShadow = 11;
+	PseudoStatSchoolHitPercentArcane = 6;
+	PseudoStatSchoolHitPercentFire = 7;
+	PseudoStatSchoolHitPercentFrost = 8;
+	PseudoStatSchoolHitPercentHoly = 9;
+	PseudoStatSchoolHitPercentNature = 10;
+	PseudoStatSchoolHitPercentShadow = 11;
 
 	PseudoStatMeleeHitPercent = 12;
 	PseudoStatSpellHitPercent = 13;
@@ -583,6 +583,7 @@ message ConsumesSpec {
 	bool pet_scroll_agi = 18;
 	bool pet_scroll_str = 19;
 	bool nightmare_seed = 20;
+	int32 pet_food_id = 21;
 }
 
 enum MobType {

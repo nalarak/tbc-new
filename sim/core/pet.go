@@ -25,12 +25,10 @@ type PetStatInheritance func(ownerStats stats.Stats) stats.Stats
 type PetSpeedInheritance func(sim *Simulation, ownerSpeedMultiplier float64)
 
 type PetConfig struct {
-	Name      string
-	Owner     *Character
-	BaseStats stats.Stats
-	// Hit and Expertise are always inherited by combining the owners physical hit and expertise, then halving it
-	// For casters this will automatically give spell hit cap at 7.5% physical hit and exp
-	NonHitExpStatInheritance        PetStatInheritance
+	Name                            string
+	Owner                           *Character
+	BaseStats                       stats.Stats
+	StatInheritance                 PetStatInheritance
 	EnabledOnStart                  bool
 	IsGuardian                      bool
 	HasDynamicMeleeSpeedInheritance bool
@@ -109,7 +107,7 @@ func NewPet(config PetConfig) Pet {
 			baseStats:  config.BaseStats,
 		},
 		Owner:                           config.Owner,
-		statInheritance:                 makeStatInheritanceFunc(config.NonHitExpStatInheritance),
+		statInheritance:                 config.StatInheritance,
 		hasDynamicMeleeSpeedInheritance: config.HasDynamicMeleeSpeedInheritance,
 		inheritedMeleeSpeedMultiplier:   1,
 		hasDynamicCastSpeedInheritance:  config.HasDynamicCastSpeedInheritance,
@@ -135,22 +133,6 @@ func NewPet(config PetConfig) Pet {
 func (pet *Pet) Initialize() {
 	if pet.hasResourceRegenInheritance {
 		pet.enableResourceRegenInheritance()
-	}
-}
-
-func makeStatInheritanceFunc(nonHitExpStatInheritance PetStatInheritance) PetStatInheritance {
-	return func(ownerStats stats.Stats) stats.Stats {
-		inheritedStats := nonHitExpStatInheritance(ownerStats)
-
-		// TODO: I dunno how this works in TBC
-		hitRating := ownerStats[stats.MeleeHitRating]
-		expertiseRating := ownerStats[stats.ExpertiseRating]
-		combined := (hitRating + expertiseRating) * 0.5
-
-		inheritedStats[stats.MeleeHitRating] = combined
-		inheritedStats[stats.ExpertiseRating] = combined
-
-		return inheritedStats
 	}
 }
 
@@ -288,9 +270,6 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		// make sure to reset it to refresh focus
 		pet.focusBar.reset(sim)
 		pet.focusBar.enable(sim, sim.CurrentTime)
-		if pet.hasResourceRegenInheritance {
-			pet.focusBar.focusRegenMultiplier *= pet.Owner.PseudoStats.AttackSpeedMultiplier
-		}
 	}
 
 	if pet.HasEnergyBar() {
@@ -439,9 +418,8 @@ func (pet *Pet) Disable(sim *Simulation) {
 		pet.Log(sim, pet.GetStats().FlatString())
 	}
 }
-
 func (pet *Pet) ChangeStatInheritance(nonHitExpStatInheritance PetStatInheritance) {
-	pet.statInheritance = makeStatInheritanceFunc(nonHitExpStatInheritance)
+	pet.statInheritance = nonHitExpStatInheritance
 }
 
 func (pet *Pet) GetInheritedStats() stats.Stats {

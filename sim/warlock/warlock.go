@@ -66,6 +66,12 @@ type Warlock struct {
 
 	DemonicKnowledgeDep   *stats.StatDependency
 	DemonicKnowledgeBonus float64
+
+	currentActiveCurse *core.Spell
+
+	CorruptionTickBaseDamage float64
+	ImmolateTickBaseDamage   float64
+	T5_4PC_Multiplier        map[int32]map[*core.Spell]float64
 }
 
 func (warlock *Warlock) GetCharacter() *core.Character {
@@ -152,6 +158,8 @@ func NewWarlock(character *core.Character, options *proto.Player, warlockOptions
 		warlock.registerPets()
 	}
 
+	warlock.T5_4PC_Multiplier = make(map[int32]map[*core.Spell]float64)
+
 	return warlock
 }
 
@@ -159,13 +167,19 @@ func (warlock *Warlock) AfflictionCount(target *core.Unit) float64 {
 	return float64(len(target.GetAurasWithTag("Affliction")))
 }
 
-func (warlock *Warlock) DeactivateOtherCurses(sim *core.Simulation, target *core.Unit) {
+func (warlock *Warlock) DeactivateOtherCurses(sim *core.Simulation, newCurse *core.Spell, target *core.Unit) {
+	if warlock.currentActiveCurse != nil {
+		if warlock.currentActiveCurse.Dot(target) != nil {
+			warlock.currentActiveCurse.Dot(target).Deactivate(sim)
+		}
+		if warlock.currentActiveCurse.RelatedAuraArrays != nil {
+			for _, auraArray := range warlock.currentActiveCurse.RelatedAuraArrays {
+				auraArray.Get(target).Deactivate(sim)
+			}
+		}
+	}
 
-	warlock.CurseOfAgony.Dot(target).Deactivate(sim)
-	warlock.CurseOfDoom.Dot(target).Deactivate(sim)
-	warlock.CurseOfElementsAuras.Get(target).Deactivate(sim)
-	warlock.CurseOfRecklessnessAuras.Get(target).Deactivate(sim)
-
+	warlock.currentActiveCurse = newCurse
 }
 
 // Agent is a generic way to access underlying warlock on any of the agents.

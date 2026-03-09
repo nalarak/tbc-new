@@ -1,42 +1,76 @@
 import * as InputHelpers from '../../core/components/input_helpers';
 import { Spec } from '../../core/proto/common';
-import { HunterOptions_Ammo, HunterOptions_QuiverBonus } from '../../core/proto/hunter';
+import { HunterOptions_Ammo, HunterOptions_PetType, HunterOptions_QuiverBonus } from '../../core/proto/hunter';
 import { ActionId } from '../../core/proto_utils/action_id';
-import { makePetTypeInputConfig } from '../../core/talents/hunter_pet';
+import { HunterSpecs } from '../../core/proto_utils/utils';
 import i18n from '../../i18n/config.js';
 
-export const AmmoInput = () =>
-	InputHelpers.makeClassOptionsEnumIconInput<Spec.SpecHunter, HunterOptions_Ammo>({
+export const AmmoInput = <SpecType extends HunterSpecs>() =>
+	InputHelpers.makeClassOptionsEnumIconInput<SpecType, HunterOptions_Ammo>({
 		fieldName: 'ammo',
-		numColumns: 7,
+		numColumns: 4,
+		label: i18n.t('settings_tab.other.ammo.label'),
+		labelTooltip: i18n.t('settings_tab.other.ammo.tooltip'),
 		values: [
-			{ value: HunterOptions_Ammo.AmmoNone, tooltip: 'No Ammo' },
-			{ actionId: ActionId.fromItemId(31737), value: HunterOptions_Ammo.TimelessArrow },
-			{ actionId: ActionId.fromItemId(34581), value: HunterOptions_Ammo.MysteriousArrow },
-			{ actionId: ActionId.fromItemId(33803), value: HunterOptions_Ammo.AdamantiteStinger },
-			{ actionId: ActionId.fromItemId(30611), value: HunterOptions_Ammo.HalaaniRazorshaft },
-			{ actionId: ActionId.fromItemId(28056), value: HunterOptions_Ammo.BlackflightArrow },
-			{ actionId: ActionId.fromItemId(31949), value: HunterOptions_Ammo.WardensArrow },
+			{ value: HunterOptions_Ammo.AmmoNone, tooltip: i18n.t('settings_tab.other.ammo.no_ammo') },
+			{ actionId: ActionId.fromItemId(31737), value: HunterOptions_Ammo.TimelessArrow, tooltip: i18n.t('settings_tab.other.ammo.timeless_arrow') },
+			{ actionId: ActionId.fromItemId(34581), value: HunterOptions_Ammo.MysteriousArrow, tooltip: i18n.t('settings_tab.other.ammo.mysterious_arrow') },
+			{
+				actionId: ActionId.fromItemId(33803),
+				value: HunterOptions_Ammo.AdamantiteStinger,
+				tooltip: i18n.t('settings_tab.other.ammo.adamantite_stinger'),
+			},
+			{
+				actionId: ActionId.fromItemId(30611),
+				value: HunterOptions_Ammo.HalaaniRazorshaft,
+				tooltip: i18n.t('settings_tab.other.ammo.halaani_razorshaft'),
+			},
+			{ actionId: ActionId.fromItemId(28056), value: HunterOptions_Ammo.BlackflightArrow, tooltip: i18n.t('settings_tab.other.ammo.blackflight_arrow') },
+			{ actionId: ActionId.fromItemId(31949), value: HunterOptions_Ammo.WardensArrow, tooltip: i18n.t('settings_tab.other.ammo.wardens_arrow') },
 		],
 	});
 
-export const QuiverInput = () =>
-	InputHelpers.makeClassOptionsEnumIconInput<Spec.SpecHunter, HunterOptions_QuiverBonus>({
+export const QuiverInput = <SpecType extends HunterSpecs>() =>
+	InputHelpers.makeClassOptionsEnumIconInput<SpecType, HunterOptions_QuiverBonus>({
 		extraCssClasses: ['quiver-picker'],
 		fieldName: 'quiverBonus',
-		numColumns: 7,
+		numColumns: 4,
+		label: i18n.t('settings_tab.other.quiver.label'),
+		labelTooltip: i18n.t('settings_tab.other.quiver.tooltip'),
 		values: [
-			{ color: '82e89d', value: HunterOptions_QuiverBonus.QuiverNone },
-			{ actionId: ActionId.fromItemId(18714), value: HunterOptions_QuiverBonus.Speed15 },
-			{ actionId: ActionId.fromItemId(2662), value: HunterOptions_QuiverBonus.Speed14 },
-			{ actionId: ActionId.fromItemId(8217), value: HunterOptions_QuiverBonus.Speed13 },
-			{ actionId: ActionId.fromItemId(7371), value: HunterOptions_QuiverBonus.Speed12 },
-			{ actionId: ActionId.fromItemId(3605), value: HunterOptions_QuiverBonus.Speed11 },
-			{ actionId: ActionId.fromItemId(3573), value: HunterOptions_QuiverBonus.Speed10 },
+			{ color: '82e89d', value: HunterOptions_QuiverBonus.QuiverNone, tooltip: i18n.t('settings_tab.other.quiver.no_quiver') },
+			{ actionId: ActionId.fromItemId(18714), value: HunterOptions_QuiverBonus.Speed15, tooltip: i18n.t('settings_tab.other.quiver.speed_15') },
+			{ actionId: ActionId.fromItemId(2662), value: HunterOptions_QuiverBonus.Speed14, tooltip: i18n.t('settings_tab.other.quiver.speed_14') },
+			{ actionId: ActionId.fromItemId(8217), value: HunterOptions_QuiverBonus.Speed13, tooltip: i18n.t('settings_tab.other.quiver.speed_13') },
+			{ actionId: ActionId.fromItemId(7371), value: HunterOptions_QuiverBonus.Speed12, tooltip: i18n.t('settings_tab.other.quiver.speed_12') },
+			{ actionId: ActionId.fromItemId(3605), value: HunterOptions_QuiverBonus.Speed11, tooltip: i18n.t('settings_tab.other.quiver.speed_11') },
+			{ actionId: ActionId.fromItemId(3573), value: HunterOptions_QuiverBonus.Speed10, tooltip: i18n.t('settings_tab.other.quiver.speed_10') },
 		],
 	});
 
-export const PetTypeInput = () => makePetTypeInputConfig<Spec.SpecHunter>();
+export const PetTypeInput = <SpecType extends HunterSpecs>() =>
+	InputHelpers.makeClassOptionsEnumIconInput<SpecType, HunterOptions_PetType>({
+		extraCssClasses: ['pet-type-picker'],
+		fieldName: 'petType',
+		numColumns: 4,
+		label: i18n.t('settings_tab.other.pet_type.label'),
+		labelTooltip: i18n.t('settings_tab.other.pet_type.tooltip'),
+		values: [
+			{ value: HunterOptions_PetType.PetNone, actionId: ActionId.fromPetName(''), tooltip: i18n.t('settings_tab.other.pet_type.no_pet') },
+			{ value: HunterOptions_PetType.Bat, actionId: ActionId.fromPetName('Bat'), tooltip: i18n.t('settings_tab.other.pet_type.bat') },
+			{ value: HunterOptions_PetType.Bear, actionId: ActionId.fromPetName('Bear'), tooltip: i18n.t('settings_tab.other.pet_type.bear') },
+			{ value: HunterOptions_PetType.Cat, actionId: ActionId.fromPetName('Cat'), tooltip: i18n.t('settings_tab.other.pet_type.cat') },
+			{ value: HunterOptions_PetType.Crab, actionId: ActionId.fromPetName('Crab'), tooltip: i18n.t('settings_tab.other.pet_type.crab') },
+			{ value: HunterOptions_PetType.Owl, actionId: ActionId.fromPetName('Owl'), tooltip: i18n.t('settings_tab.other.pet_type.owl') },
+			{ value: HunterOptions_PetType.Raptor, actionId: ActionId.fromPetName('Raptor'), tooltip: i18n.t('settings_tab.other.pet_type.raptor') },
+			{ value: HunterOptions_PetType.Ravager, actionId: ActionId.fromPetName('Ravager'), tooltip: i18n.t('settings_tab.other.pet_type.ravager') },
+			{
+				value: HunterOptions_PetType.WindSerpent,
+				actionId: ActionId.fromPetName('Wind Serpent'),
+				tooltip: i18n.t('settings_tab.other.pet_type.wind_serpent'),
+			},
+		],
+	});
 
 export const PetSingleAbility = () =>
 	InputHelpers.makeClassOptionsBooleanInput<Spec.SpecHunter>({

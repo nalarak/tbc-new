@@ -17,7 +17,8 @@ import AfflictionRot from './apls/affliction.apl.json';
 import DemoRot from './apls/demonology.apl.json';
 import DestroRot from './apls/destruction.apl.json';
 import DestroFireRot from './apls/destro_fire.apl.json';
-import { defaultRaidBuffMajorDamageCooldowns } from '../../core/proto_utils/utils';
+import { defaultExposeWeaknessSettings, defaultRaidBuffMajorDamageCooldowns } from '../../core/proto_utils/utils';
+import { Phase } from '../../core/constants/other';
 
 // Preset options for this spec.
 // Eventually we will import these values for the raid sim too, so its good to
@@ -153,6 +154,8 @@ export const DefaultIndividualBuffs = IndividualBuffs.create({
 });
 
 export const DefaultDebuffs = Debuffs.create({
+	...defaultExposeWeaknessSettings(Phase.Phase1),
+	improvedSealOfTheCrusader: true,
 	judgementOfWisdom: true,
 	misery: true,
 	shadowWeaving: true,
@@ -160,9 +163,14 @@ export const DefaultDebuffs = Debuffs.create({
 	screech: true,
 	faerieFire: TristateEffect.TristateEffectImproved,
 	curseOfRecklessness: true,
-	improvedSealOfTheCrusader: true,
 	shadowEmbrace: true,
 	curseOfElements: TristateEffect.TristateEffectImproved,
+	bloodFrenzy: true,
+	giftOfArthas: true,
+	mangle: true,
+	exposeArmor: TristateEffect.TristateEffectImproved,
+	huntersMark: TristateEffect.TristateEffectImproved,
+	isbUptime: 0.52,
 });
 
 export const P1_DEFAULT_SETTINGS: PresetUtils.PresetSettings = {
@@ -184,6 +192,25 @@ export const P1_AFFLICTION_DEFAULT_SETTINGS: PresetUtils.PresetSettings = {
 			...DefaultOptions.classOptions,
 			curseOptions: WarlockOptions_CurseOptions.Elements,
 			summon: WarlockOptions_Summon.Imp,
+			sacrificeSummon: false,
+		},
+	}),
+	debuffs: Debuffs.create({
+		...DefaultDebuffs,
+		curseOfElements: TristateEffect.TristateEffectMissing,
+	}),
+};
+
+export const P1_DEMONOLOGY_DEFAULT_SETTINGS: PresetUtils.PresetSettings = {
+	...P1_DEFAULT_SETTINGS,
+	name: 'Demonology',
+	specOptions: WarlockOptions.create({
+		...DefaultOptions,
+		classOptions: {
+			...DefaultOptions.classOptions,
+			curseOptions: WarlockOptions_CurseOptions.Recklessness,
+			summon: WarlockOptions_Summon.Succubus,
+			sacrificeSummon: false,
 		},
 	}),
 	debuffs: Debuffs.create({
@@ -200,6 +227,7 @@ export const P1_FIRE_DEFAULT_SETTINGS: PresetUtils.PresetSettings = {
 		classOptions: {
 			...DefaultOptions.classOptions,
 			summon: WarlockOptions_Summon.Imp,
+			sacrificeSummon: true,
 		},
 	}),
 	consumables: ConsumesSpec.create({
@@ -224,7 +252,7 @@ export const DEMONOLOGY_BUILD = PresetUtils.makePresetBuild('Demonology', {
 	talents: TalentsDemoRuin,
 	epWeights: P1_AFFLI_DEMO_DESTRO_EP,
 	rotation: DemoAPL,
-	settings: P1_DEFAULT_SETTINGS,
+	settings: P1_DEMONOLOGY_DEFAULT_SETTINGS,
 });
 
 export const DESTRUCTION_BUILD = PresetUtils.makePresetBuild('Destruction', {

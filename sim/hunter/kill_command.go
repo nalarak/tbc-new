@@ -53,10 +53,8 @@ func (hunter *Hunter) registerKillCommandSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			if hunter.Pet != nil && hunter.Pet.KillCommand.CanCast(sim, target) {
-				hunter.killCommandEnabledUntil = 0
-				hunter.Pet.KillCommand.Cast(sim, target)
-			}
+			hunter.killCommandEnabledUntil = 0
+			hunter.Pet.KillCommand.Cast(sim, target)
 		},
 	})
 }

@@ -52,7 +52,7 @@ func applyDebuffEffects(target *Unit, targetIdx int, debuffs *proto.Debuffs, rai
 	}
 
 	if debuffs.HuntersMark != proto.TristateEffect_TristateEffectMissing {
-		aura := HuntersMarkAura(target, TernaryInt32(IsImproved(debuffs.HuntersMark), 5, 0))
+		aura := HuntersMarkAura(target, GetTristateValueInt32(debuffs.HuntersMark, 0, 5))
 		ApplyFixedUptimeAura(aura, 1, aura.Duration, 1)
 
 		ScheduledAura(aura, PeriodicActionOptions{
@@ -248,14 +248,16 @@ func ExposeWeaknessAura(target *Unit, agilityFunc ExposeWeaknessAgiFunc) *Aura {
 	var currentApBonus float64
 
 	aura := target.GetOrRegisterAura(Aura{
-		Label:    "Expose Weakness",
-		Tag:      "ExposeWeakness",
-		ActionID: ActionID{SpellID: 34503},
-		Duration: time.Second * 7,
+		Label:     "Expose Weakness",
+		Tag:       "ExposeWeakness",
+		ActionID:  ActionID{SpellID: 34503},
+		Duration:  time.Second * 7,
+		MaxStacks: 10000,
 		OnGain: func(aura *Aura, sim *Simulation) {
 			currentApBonus = agilityFunc() * 0.25
 			target.PseudoStats.BonusAttackPower += currentApBonus
 			target.PseudoStats.BonusRangedAttackPower += currentApBonus
+			aura.SetStacks(sim, int32(currentApBonus))
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			target.PseudoStats.BonusAttackPower -= currentApBonus
@@ -359,17 +361,29 @@ func HuntersMarkAura(target *Unit, improved int32) *Aura {
 
 func ImprovedScorchAura(target *Unit) *Aura {
 	fireBonus := 0.03
+	var effect *ExclusiveEffect
 
-	return target.GetOrRegisterAura(Aura{
+	aura := target.GetOrRegisterAura(Aura{
 		Label:     "Improved Scorch",
 		ActionID:  ActionID{SpellID: 12873},
 		Duration:  time.Second * 30,
 		MaxStacks: 5,
 		OnStacksChange: func(aura *Aura, sim *Simulation, oldStacks int32, newStacks int32) {
-			target.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexFire] /= 1.0 + fireBonus*float64(oldStacks)
-			target.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexFire] *= 1.0 + fireBonus*float64(newStacks)
+			effect.SetPriority(sim, 1.0+fireBonus*float64(newStacks))
 		},
 	})
+
+	effect = aura.NewExclusiveEffect("ImprovedScorch", false, ExclusiveEffect{
+		Priority: 1,
+		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
+			target.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexFire] *= ee.Priority
+		},
+		OnExpire: func(ee *ExclusiveEffect, sim *Simulation) {
+			target.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexFire] /= ee.Priority
+		},
+	})
+
+	return aura
 }
 
 func ImprovedSealOfTheCrusaderAura(target *Unit) *Aura {
@@ -387,7 +401,7 @@ func ImprovedShadowBoltAura(target *Unit, uptime float64, points int32) *Aura {
 	config := Aura{
 		Label:     "ImprovedShadowBolt-" + strconv.Itoa(int(points)),
 		Tag:       "ImprovedShadowBolt",
-		ActionID:  ActionID{SpellID: 17803},
+		ActionID:  ActionID{SpellID: 17800},
 		Duration:  time.Second * 12,
 		MaxStacks: 4,
 	}

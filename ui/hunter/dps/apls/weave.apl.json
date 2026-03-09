@@ -2,6 +2,32 @@
 	"type": "TypeAPL",
 	"prepullActions": [{ "action": { "castSpell": { "spellId": { "spellId": 27044, "rank": 8 } } }, "doAtValue": { "const": { "val": "-20s" } } }],
 	"priorityList": [
+		{
+			"action": {
+				"condition": {
+					"and": {
+						"vals": [
+							{ "cmp": { "op": "OpLt", "lhs": { "currentManaPercent": {} }, "rhs": { "const": { "val": "30%" } } } },
+							{ "auraIsInactive": { "auraId": { "spellId": 34074 } } }
+						]
+					}
+				},
+				"castSpell": { "spellId": { "spellId": 34074 } }
+			}
+		},
+		{
+			"action": {
+				"condition": {
+					"and": {
+						"vals": [
+							{ "cmp": { "op": "OpGe", "lhs": { "currentManaPercent": {} }, "rhs": { "const": { "val": "50%" } } } },
+							{ "auraIsInactive": { "auraId": { "spellId": 27044, "rank": 8 } } }
+						]
+					}
+				},
+				"castSpell": { "spellId": { "spellId": 27044, "rank": 8 } }
+			}
+		},
 		{ "action": { "autocastOtherCooldowns": {} } },
 		{ "action": { "castSpell": { "spellId": { "spellId": 34026 } } } },
 		{
@@ -37,29 +63,21 @@
 				"move": { "rangeFromTarget": { "const": { "val": "4" } } }
 			}
 		},
-		{ "action": { "castSpell": { "spellId": { "spellId": 27014, "tag": 1, "rank": 9 } } } },
 		{ "action": { "castSpell": { "spellId": { "spellId": 27021, "rank": 6 } } } },
 		{ "action": { "castSpell": { "spellId": { "spellId": 27019, "rank": 9 } } } },
 		{
 			"action": {
 				"condition": {
-					"and": {
-						"vals": [
-							{
-								"cmp": {
-									"op": "OpLe",
-									"lhs": { "spellCastTime": { "spellId": { "spellId": 34120, "rank": 1 } } },
-									"rhs": {
-										"math": {
-											"op": "OpSub",
-											"lhs": { "autoSwingTime": { "autoType": "Ranged" } },
-											"rhs": { "autoTimeSinceLast": { "autoType": "RangedAuto" } }
-										}
-									}
-								}
-							},
-							{}
-						]
+					"cmp": {
+						"op": "OpLe",
+						"lhs": { "spellCastTime": { "spellId": { "spellId": 34120, "rank": 1 } } },
+						"rhs": {
+							"math": {
+								"op": "OpSub",
+								"lhs": { "autoSwingTime": { "autoType": "Ranged" } },
+								"rhs": { "autoTimeSinceLast": { "autoType": "RangedAuto" } }
+							}
+						}
 					}
 				},
 				"castSpell": { "spellId": { "spellId": 34120, "rank": 1 } }

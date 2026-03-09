@@ -8,11 +8,11 @@ import (
 
 func (hunter *Hunter) registerRaptorStrikeSpell() {
 	hunter.RaptorStrike = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:       core.ActionID{SpellID: 27014}.WithTag(1),
+		ActionID:       core.ActionID{SpellID: 27014},
 		SpellSchool:    core.SpellSchoolPhysical,
 		ClassSpellMask: HunterSpellRaptorStrike,
-		ProcMask:       core.ProcMaskMeleeMHSpecial,
-		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagAPL,
+		ProcMask:       core.ProcMaskMeleeMH,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
 
 		MaxRange: core.MaxMeleeRange,
 
@@ -35,7 +35,7 @@ func (hunter *Hunter) registerRaptorStrikeSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := hunter.MHWeaponDamage(sim, spell.MeleeAttackPower()) + 170
+			baseDamage := hunter.MHWeaponDamage(sim, spell.MeleeAttackPower(target)) + 170
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})
@@ -43,9 +43,9 @@ func (hunter *Hunter) registerRaptorStrikeSpell() {
 
 // Returns true if the regular melee swing should be used, false otherwise.
 func (hunter *Hunter) TryRaptorStrike(sim *core.Simulation, mhSwingSpell *core.Spell) *core.Spell {
-	if hunter.RaptorStrike.CanCast(sim, hunter.CurrentTarget) {
-		return hunter.RaptorStrike
+	if mhSwingSpell.ActionID.Tag != 1 || !hunter.RaptorStrike.CanCast(sim, hunter.CurrentTarget) {
+		return mhSwingSpell
 	}
 
-	return mhSwingSpell
+	return hunter.RaptorStrike
 }
