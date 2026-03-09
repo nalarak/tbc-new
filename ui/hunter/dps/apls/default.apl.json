@@ -37,7 +37,7 @@
 				"move": { "rangeFromTarget": { "const": { "val": "4" } } }
 			}
 		},
-		{ "action": { "castSpell": { "spellId": { "spellId": 27014, "tag": 2, "rank": 9 } } } },
+		{ "action": { "castSpell": { "spellId": { "spellId": 27014, "tag": 1, "rank": 9 } } } },
 		{ "action": { "castSpell": { "spellId": { "spellId": 27021, "rank": 6 } } } },
 		{ "action": { "castSpell": { "spellId": { "spellId": 27019, "rank": 9 } } } },
 		{

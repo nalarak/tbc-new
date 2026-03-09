@@ -12,7 +12,7 @@ func (hunter *Hunter) registerArcaneShotSpell() {
 		SpellSchool:    core.SpellSchoolArcane,
 		ClassSpellMask: HunterSpellArcaneShot,
 		ProcMask:       core.ProcMaskRangedSpecial,
-		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		Flags:          core.SpellFlagMeleeMetrics,
 
 		MissileSpeed: 40,
 		MinRange:     core.MaxMeleeRange,

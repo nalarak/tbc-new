@@ -12,7 +12,7 @@ func (hunter *Hunter) registerRaptorStrikeSpell() {
 		SpellSchool:    core.SpellSchoolPhysical,
 		ClassSpellMask: HunterSpellRaptorStrike,
 		ProcMask:       core.ProcMaskMeleeMHSpecial,
-		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagAPL,
 
 		MaxRange: core.MaxMeleeRange,
 
