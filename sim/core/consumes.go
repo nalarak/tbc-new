@@ -452,6 +452,8 @@ func registerConjuredCD(agent Agent, consumes *proto.ConsumesSpec) {
 
 var SuperSapperActionID = ActionID{ItemID: 23827}
 var GoblinSapperActionID = ActionID{ItemID: 10646}
+var EzThroDynamiteTwoActionID = ActionID{ItemID: 18588}
+var CrystalChargeActionID = ActionID{ItemID: 11566}
 var FelIronBombActionID = ActionID{ItemID: 23736}
 var AdamantiteGrenadeActionID = ActionID{ItemID: 23737}
 var GnomishFlameTurretActionID = ActionID{ItemID: 23841}
@@ -483,6 +485,10 @@ func registerExplosivesCD(agent Agent, consumes *proto.ConsumesSpec) {
 	if consumes.ExplosiveId > 0 {
 		var filler *Spell
 		switch consumes.ExplosiveId {
+		case 18588:
+			filler = character.newEzThroDynamiteTwo(sharedTimer)
+		case 15239:
+			filler = character.newCrystalChargeSpell(sharedTimer)
 		case 30217:
 			filler = character.newAdamantiteGrenadeSpell(sharedTimer)
 		case 30216:
@@ -500,15 +506,19 @@ func registerExplosivesCD(agent Agent, consumes *proto.ConsumesSpec) {
 }
 
 // Creates a spell object for the common explosive case.
-func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, actionID ActionID, school SpellSchool, minDamage float64, maxDamage float64, cooldown Cooldown) SpellConfig {
+func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, actionID ActionID, school SpellSchool, minDamage float64, maxDamage float64, speed float64, castTime time.Duration, cooldown Cooldown) SpellConfig {
 	dealSelfDamage := actionID.SameAction(SuperSapperActionID) || actionID.SameAction(GoblinSapperActionID)
 
 	return SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: school,
-		ProcMask:    ProcMaskEmpty,
+		ActionID:     actionID,
+		SpellSchool:  school,
+		ProcMask:     ProcMaskEmpty,
+		MissileSpeed: speed,
 
 		Cast: CastConfig{
+			DefaultCast: Cast{
+				CastTime: castTime,
+			},
 			CD: cooldown,
 			SharedCD: Cooldown{
 				Timer:    sharedTimer,
@@ -524,7 +534,14 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 			baseDamage := sim.Roll(minDamage, maxDamage) * sim.Encounter.AOECapMultiplier()
-			spell.CalcAndDealAoeDamage(sim, baseDamage, spell.OutcomeMagicHitAndCrit)
+			spell.CalcAoeDamage(sim, baseDamage, spell.OutcomeMagicHitAndCrit)
+			if speed > 0 {
+				spell.WaitTravelTime(sim, func(sim *Simulation) {
+					spell.DealBatchedAoeDamage(sim)
+				})
+			} else {
+				spell.DealBatchedAoeDamage(sim)
+			}
 
 			if dealSelfDamage {
 				baseDamage := sim.Roll(minDamage, maxDamage)
@@ -534,16 +551,22 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 	}
 }
 func (character *Character) newSuperSapperSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, SuperSapperActionID, SpellSchoolFire, 900, 1500, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, SuperSapperActionID, SpellSchoolFire, 900, 1500, 0, 0, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}))
 }
 func (character *Character) newGoblinSapperSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, GoblinSapperActionID, SpellSchoolFire, 450, 750, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, GoblinSapperActionID, SpellSchoolFire, 450, 750, 0, 0, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}))
 }
 func (character *Character) newAdamantiteGrenadeSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, AdamantiteGrenadeActionID, SpellSchoolFire, 450, 750, Cooldown{}))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, AdamantiteGrenadeActionID, SpellSchoolFire, 450, 750, 14, 0, Cooldown{}))
 }
 func (character *Character) newFelIronBombSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, AdamantiteGrenadeActionID, SpellSchoolFire, 330, 770, Cooldown{}))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, FelIronBombActionID, SpellSchoolFire, 330, 770, 14, time.Second, Cooldown{}))
+}
+func (character *Character) newCrystalChargeSpell(sharedTimer *Timer) *Spell {
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, CrystalChargeActionID, SpellSchoolFire, 383, 517, 0, 0, Cooldown{}))
+}
+func (character *Character) newEzThroDynamiteTwo(sharedTimer *Timer) *Spell {
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, EzThroDynamiteTwoActionID, SpellSchoolFire, 213, 287, 14, time.Second, Cooldown{}))
 }
 
 func registerDrumsCD(agent Agent, consumables *proto.ConsumesSpec) {

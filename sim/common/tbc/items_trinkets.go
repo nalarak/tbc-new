@@ -652,4 +652,93 @@ func init() {
 			},
 		})
 	})
+
+	// Pendant of the Violet Eye
+	core.NewItemEffect(28727, func(agent core.Agent) {
+		character := agent.GetCharacter()
+
+		bonusPerStack := stats.Stats{stats.MP5: 21}
+
+		aura := character.RegisterAura(core.Aura{
+			Label:     "Enlightenment",
+			ActionID:  core.ActionID{SpellID: 35095},
+			Duration:  core.NeverExpires,
+			MaxStacks: 20,
+
+			OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks, newStacks int32) {
+				character.AddStatsDynamic(sim, bonusPerStack.Multiply(float64(newStacks-oldStacks)))
+			},
+		})
+
+		procAura := character.RegisterAura(core.Aura{
+			Label:    "Enlightenment Trigger",
+			ActionID: core.ActionID{SpellID: 29601},
+			Duration: time.Second * 20,
+
+			OnExpire: func(_ *core.Aura, sim *core.Simulation) {
+				aura.Deactivate(sim)
+			},
+		}).AttachProcTrigger(core.ProcTrigger{
+			Callback: core.CallbackOnCastComplete,
+			ProcMask: core.ProcMaskSpellDamage | core.ProcMaskSpellHealing,
+
+			ExtraCondition: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) bool {
+				return spell.CurCast.Cost > 0
+			},
+
+			Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				aura.Activate(sim)
+				aura.AddStack(sim)
+			},
+		})
+
+		spell := character.RegisterSpell(core.SpellConfig{
+			ActionID:    core.ActionID{ItemID: 28727},
+			SpellSchool: core.SpellSchoolPhysical,
+			ProcMask:    core.ProcMaskEmpty,
+
+			Cast: core.CastConfig{
+				CD: core.Cooldown{
+					Timer:    character.NewTimer(),
+					Duration: time.Minute * 2,
+				},
+			},
+
+			ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+				spell.RelatedSelfBuff.Activate(sim)
+			},
+
+			RelatedSelfBuff: procAura,
+		})
+
+		character.AddMajorCooldown(core.MajorCooldown{
+			Spell: spell,
+			Type:  core.CooldownTypeMana,
+		})
+	})
+
+	// Memento of Tyrande
+	core.NewItemEffect(32496, func(agent core.Agent) {
+		character := agent.GetCharacter()
+
+		aura := character.NewTemporaryStatsAura(
+			"Wisdom",
+			core.ActionID{SpellID: 37656},
+			stats.Stats{stats.MP5: 76},
+			time.Second*15,
+		)
+
+		character.MakeProcTriggerAura(core.ProcTrigger{
+			Name:            "Memento of Tyrande",
+			Callback:        core.CallbackOnCastComplete,
+			ProcMask:        core.ProcMaskSpellDamage | core.ProcMaskSpellHealing,
+			MetricsActionID: core.ActionID{SpellID: 37655},
+			ProcChance:      0.1,
+			ICD:             time.Second * 50,
+
+			Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				aura.Activate(sim)
+			},
+		})
+	})
 }

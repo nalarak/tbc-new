@@ -10,7 +10,7 @@ import { Class, GemColor, ItemQuality, ItemSlot, Profession, PseudoStat, Race, S
 import { UIGem as Gem, ReforgeSettings, StatCapType } from '../proto/ui';
 import { EquippedItem } from '../proto_utils/equipped_item';
 import { Gear } from '../proto_utils/gear';
-import { PRIMARY_COLORS, gemMatchesSocket, getEmptyGemSocketIconUrl, getMetaGemCondition, socketToMatchingColors } from '../proto_utils/gems';
+import { gemColorsToMatchingSocket, gemMatchesSocket, getEmptyGemSocketIconUrl, getMetaGemCondition } from '../proto_utils/gems';
 import { statCapTypeNames } from '../proto_utils/names';
 import { translateSlotName } from '../../i18n/localization';
 import { pseudoStatIsCapped, StatCap, statIsCapped, Stats, UnitStat, UnitStatPresets } from '../proto_utils/stats';
@@ -28,7 +28,7 @@ import { ReforgeWorkerPool, getReforgeWorkerPool } from '../reforge_worker_pool'
 import type { LPModel, LPSolution, SerializedConstraints, SerializedVariables } from '../../worker/reforge_types';
 import { ProgressTrackerModal } from './progress_tracker_modal';
 import { getEmptySlotIconUrl } from './gear_picker/utils';
-import { CURRENT_PHASE, Phase } from '../constants/other';
+import { CURRENT_PHASE } from '../constants/other';
 import { CharacterStats } from './character_stats';
 
 type YalpsCoefficients = Map<string, number>;
@@ -1138,6 +1138,24 @@ export class ReforgeOptimizer {
 		const variables = new Map<string, YalpsCoefficients>();
 		const gemsToInclude = this.buildGemOptions(preCapEPs, reforgeCaps, reforgeSoftCaps);
 
+		const metaGem = gear.getMetaGem();
+		let compareColorGreater = 0,
+			compareColorLesser = 0;
+		if (metaGem?.id) {
+			const condition = getMetaGemCondition(metaGem.id);
+			compareColorGreater = condition.compareColorGreater || 0;
+			compareColorLesser = condition.compareColorLesser || 0;
+		}
+
+		const getColorCompareConstraint = (socketColors: GemColor[]) => {
+			let value = 0;
+			if (socketColors.filter(c => c != compareColorGreater || c != compareColorLesser).length) {
+				if (socketColors.some(c => c == compareColorGreater)) value = +1;
+				if (socketColors.some(c => c == compareColorLesser)) value = -1;
+			}
+			return value;
+		};
+
 		for (const slot of gear.getItemSlots()) {
 			const item = gear.getEquippedItem(slot);
 
@@ -1190,18 +1208,26 @@ export class ReforgeOptimizer {
 						const coefficients = new Map<string, number>(gemData.coefficients);
 						coefficients.set(constraintKey, 1);
 
+						const socketColors = gemColorsToMatchingSocket.get(gemData.gem.color) || [];
+
 						if (gemMatchesSocket(gemData.gem, socketColor)) {
 							coefficients.set(`GemColor_${socketColor}`, 1);
+							const compareValue = getColorCompareConstraint(socketColors);
+							if (compareValue != 0) {
+								coefficients.set(`GemColorCompare_${compareColorGreater}_${compareColorLesser}`, compareValue);
+							}
+
 							for (const [stat, value] of distributedSocketBonus.entries()) {
 								this.applyReforgeStat(coefficients, stat, value, preCapEPs);
 							}
-						} else if (!forceSocketBonus && PRIMARY_COLORS.includes(gemData.gem.color)) {
-							socketToMatchingColors
-								.get(socketColor)
-								?.filter(color => PRIMARY_COLORS.includes(color))
-								?.forEach(() => {
-									coefficients.set(`GemColor_${gemData.gem.color}`, 1);
-								});
+						} else if (!forceSocketBonus && socketColors.length) {
+							socketColors?.forEach(() => {
+								coefficients.set(`GemColor_${gemData.gem.color}`, 1);
+								const compareValue = getColorCompareConstraint(socketColors);
+								if (compareValue != 0) {
+									coefficients.set(`GemColorCompare_${compareColorGreater}_${compareColorLesser}`, compareValue);
+								}
+							});
 						}
 
 						if (gemData.isUnique) {
@@ -1350,7 +1376,10 @@ export class ReforgeOptimizer {
 		const constraints = new Map<string, Constraint>();
 		const metaGem = gear.getMetaGem();
 		if (metaGem?.id) {
-			const { minBlue, minRed, minYellow } = getMetaGemCondition(metaGem?.id);
+			const { minBlue, minRed, minYellow, compareColorGreater, compareColorLesser } = getMetaGemCondition(metaGem?.id);
+			if (compareColorGreater && compareColorLesser) {
+				constraints.set(`GemColorCompare_${compareColorGreater}_${compareColorLesser}`, greaterEq(2));
+			}
 			if (minBlue) {
 				constraints.set(`GemColor_${GemColor.GemColorBlue}`, greaterEq(minBlue));
 			}
@@ -1408,7 +1437,6 @@ export class ReforgeOptimizer {
 		this.pendingWorker = getReforgeWorkerPool();
 		const solution: LPSolution = await this.pendingWorker.solve(model, {
 			timeout: maxSeconds * 1000,
-			tolerance: 0.005, // unused currently
 		});
 		if (isDevMode()) {
 			console.log('LP solution for this iteration:');

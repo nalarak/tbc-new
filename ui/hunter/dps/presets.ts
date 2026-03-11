@@ -167,6 +167,7 @@ export const DefaultDebuffs = Debuffs.create({
 
 export const DefaultConsumables = ConsumesSpec.create({
 	battleElixirId: 22831, // Elixir of Major Agility
+	guardianElixirId: 22840, // Elixir of Major Mageblood
 	foodId: 27659, // Warp Burger
 	potId: 22838, // Haste Potion
 	conjuredId: 12662,

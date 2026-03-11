@@ -31,6 +31,7 @@ type PetConfig struct {
 	StatInheritance                 PetStatInheritance
 	EnabledOnStart                  bool
 	IsGuardian                      bool
+	IsDynamic                       bool
 	HasDynamicMeleeSpeedInheritance bool
 	HasDynamicCastSpeedInheritance  bool
 	HasResourceRegenInheritance     bool
@@ -64,6 +65,8 @@ type Pet struct {
 	dynamicCastSpeedInheritance   PetSpeedInheritance
 	inheritedCastSpeedMultiplier  float64
 
+	// If true the pet will automatically inherit the owner's stats
+	isDynamic bool
 	// If true the pet will automatically inherit the owner's melee speed
 	hasDynamicMeleeSpeedInheritance bool
 	// If true the pet will automatically inherit the owner's cast speed
@@ -107,10 +110,11 @@ func NewPet(config PetConfig) Pet {
 			baseStats:  config.BaseStats,
 		},
 		Owner:                           config.Owner,
-		statInheritance:                 config.StatInheritance,
-		hasDynamicMeleeSpeedInheritance: config.HasDynamicMeleeSpeedInheritance,
+		statInheritance:                 makeStatInheritanceFunc(config.StatInheritance),
+		isDynamic:                       config.IsDynamic,
+		hasDynamicMeleeSpeedInheritance: config.HasDynamicMeleeSpeedInheritance && config.IsDynamic,
 		inheritedMeleeSpeedMultiplier:   1,
-		hasDynamicCastSpeedInheritance:  config.HasDynamicCastSpeedInheritance,
+		hasDynamicCastSpeedInheritance:  config.HasDynamicCastSpeedInheritance && config.IsDynamic,
 		inheritedCastSpeedMultiplier:    1,
 		hasResourceRegenInheritance:     config.HasResourceRegenInheritance,
 		enabledOnStart:                  config.EnabledOnStart,
@@ -136,13 +140,30 @@ func (pet *Pet) Initialize() {
 	}
 }
 
+func makeStatInheritanceFunc(statInheritance PetStatInheritance) PetStatInheritance {
+	return func(ownerStats stats.Stats) stats.Stats {
+		inheritedStats := statInheritance(ownerStats)
+
+		// TODO Apparently fire ele doesnt inherit anything, is it the same for other pets ?
+
+		return inheritedStats
+	}
+}
+
+func (pet *Pet) inheritOwnerStats(sim *Simulation) {
+	pet.inheritedStats = pet.statInheritance(pet.Owner.GetStats())
+	pet.AddStatsDynamic(sim, pet.inheritedStats)
+}
+
 func (pet *Pet) enableDynamicStats(sim *Simulation) {
+	if !pet.isDynamic {
+		return
+	}
 	if slices.Contains(pet.Owner.DynamicStatsPets, pet) {
 		panic("Pet already present in dynamic stats pet list!")
 	}
 
-	pet.inheritedStats = pet.statInheritance(pet.Owner.GetStats())
-	pet.AddStatsDynamic(sim, pet.inheritedStats)
+	pet.inheritOwnerStats(sim)
 	pet.Owner.DynamicStatsPets = append(pet.Owner.DynamicStatsPets, pet)
 	pet.dynamicStatInheritance = pet.statInheritance
 	pet.pendingStatInheritance = stats.Stats{}
@@ -169,8 +190,13 @@ func (pet *Pet) AddOwnerStats(sim *Simulation, addedStats stats.Stats) {
 	pet.AddStatsDynamic(sim, inheritedChange)
 }
 
+func (pet *Pet) resetInheritedOwnerStats(sim *Simulation) {
+	pet.AddStatsDynamic(sim, pet.inheritedStats.Invert())
+	pet.inheritedStats = stats.Stats{}
+}
+
 func (pet *Pet) resetDynamicStats(sim *Simulation) {
-	if pet.dynamicStatInheritance == nil {
+	if pet.dynamicStatInheritance == nil || !pet.isDynamic {
 		return
 	}
 
@@ -181,8 +207,7 @@ func (pet *Pet) resetDynamicStats(sim *Simulation) {
 	}
 
 	pet.dynamicStatInheritance = nil
-	pet.AddStatsDynamic(sim, pet.inheritedStats.Invert())
-	pet.inheritedStats = stats.Stats{}
+	pet.resetInheritedOwnerStats(sim)
 	pet.pendingStatInheritance = stats.Stats{}
 }
 
@@ -227,8 +252,11 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		pet.reset(sim, petAgent)
 	}
 
-	pet.enableDynamicStats(sim)
-
+	if pet.isDynamic {
+		pet.enableDynamicStats(sim)
+	} else {
+		pet.inheritOwnerStats(sim)
+	}
 	//reset current mana after applying stats
 	pet.manaBar.reset()
 
@@ -389,7 +417,11 @@ func (pet *Pet) Disable(sim *Simulation) {
 		return
 	}
 
-	pet.resetDynamicStats(sim)
+	if pet.isDynamic {
+		pet.resetDynamicStats(sim)
+	} else {
+		pet.resetInheritedOwnerStats(sim)
+	}
 	pet.resetDynamicMeleeSpeed(sim)
 	pet.resetDynamicCastSpeed(sim)
 	pet.CancelGCDTimer(sim)
@@ -418,8 +450,8 @@ func (pet *Pet) Disable(sim *Simulation) {
 		pet.Log(sim, pet.GetStats().FlatString())
 	}
 }
-func (pet *Pet) ChangeStatInheritance(nonHitExpStatInheritance PetStatInheritance) {
-	pet.statInheritance = nonHitExpStatInheritance
+func (pet *Pet) ChangeStatInheritance(statInheritance PetStatInheritance) {
+	pet.statInheritance = makeStatInheritanceFunc(statInheritance)
 }
 
 func (pet *Pet) GetInheritedStats() stats.Stats {

@@ -67,7 +67,6 @@ func (mage *Mage) NewWaterElemental() *WaterElemental {
 			Owner:           &mage.Character,
 			BaseStats:       waterElementalBaseStats,
 			StatInheritance: waterElementalStatInheritance,
-			IsGuardian:      true,
 		}),
 		mageOwner: mage,
 	}

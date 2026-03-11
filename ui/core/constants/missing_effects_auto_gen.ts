@@ -466,13 +466,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		18168, // Force Reactive Disk
-		[
-			"When the shield blocks it releases an electrical charge that damages all nearby enemies. This also has a chance of damaging the shield.", // 22600 - https://www.wowhead.com/tbc/spell=22600
-			"", // 22619 - https://www.wowhead.com/tbc/spell=22619
-		]
-	],
-	[
 		18345, // Murmuring Ring
 		[
 			"Reduces the duration of any Silence or Interrupt effects used against the wearer by 10%. This effect does not stack with other similar effects.", // 42184 - https://www.wowhead.com/tbc/spell=42184
@@ -1199,12 +1192,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		23199, // Totem of the Storm
-		[
-			"Increases damage done by Chain Lightning and Lightning Bolt by up to 33.", // 28857 - https://www.wowhead.com/tbc/spell=28857
-		]
-	],
-	[
 		23200, // Totem of Sustaining
 		[
 			"Increases healing done by Lesser Healing Wave by up to 53.", // 28856 - https://www.wowhead.com/tbc/spell=28856
@@ -1385,27 +1372,9 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		24116, // Eye of the Night
-		[
-			"Increases spell damage by up to 34 for all nearby party members. Lasts 30min.", // 31033 - https://www.wowhead.com/tbc/spell=31033
-		]
-	],
-	[
 		24117, // Embrace of the Dawn
 		[
 			"All stats of nearby party members increased by 10 for 30min.", // 31026 - https://www.wowhead.com/tbc/spell=31026
-		]
-	],
-	[
-		24121, // Chain of the Twilight Owl
-		[
-			"Increases the spell critical hit chance of nearby party members by 2% for 30min.", // 31035 - https://www.wowhead.com/tbc/spell=31035
-		]
-	],
-	[
-		24122, // Coronet of Verdant Flame
-		[
-			"Chance on successful spellcast to restore 90 Mana over 10s.", // 31036 - https://www.wowhead.com/tbc/spell=31036
 		]
 	],
 	[
@@ -1657,12 +1626,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		27947, // Totem of Impact
-		[
-			"Increases damage done by Earth Shock, Flame Shock, and Frost Shock by up to 46.", // 33556 - https://www.wowhead.com/tbc/spell=33556
-		]
-	],
-	[
 		27949, // Libram of Zeal
 		[
 			"Increases the melee attack power bonus of your Seal of the Crusader by 68 and the Holy damage increase of your Judgement of the Crusader by 47.", // 33557 - https://www.wowhead.com/tbc/spell=33557
@@ -1672,12 +1635,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		27983, // Libram of Zeal
 		[
 			"Increases the melee attack power bonus of your Seal of the Crusader by 68 and the Holy damage increase of your Judgement of the Crusader by 47.", // 33557 - https://www.wowhead.com/tbc/spell=33557
-		]
-	],
-	[
-		27984, // Totem of Impact
-		[
-			"Increases damage done by Earth Shock, Flame Shock, and Frost Shock by up to 46.", // 33556 - https://www.wowhead.com/tbc/spell=33556
 		]
 	],
 	[
@@ -1705,12 +1662,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		28066, // Totem of Lightning
-		[
-			"Reduces the mana cost of your Lightning Bolt spells by 15.", // 33696 - https://www.wowhead.com/tbc/spell=33696
-		]
-	],
-	[
 		28108, // Power Infused Mushroom
 		[
 			"Restores 200 mana when you kill a target that gives experience or honor. This effect cannot occur more than once every 10 seconds.", // 33743 - https://www.wowhead.com/tbc/spell=33743
@@ -1732,12 +1683,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		28136, // Gladiator's Wyrmhide Gloves
 		[
 			"Reduces the cast time of your Cyclone spell by -0.1 sec.", // 33830 - https://www.wowhead.com/tbc/spell=33830
-		]
-	],
-	[
-		28248, // Totem of the Void
-		[
-			"Increases damage done by Chain Lightning and Lightning Bolt by up to 55.", // 34230 - https://www.wowhead.com/tbc/spell=34230
 		]
 	],
 	[
@@ -1882,12 +1827,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		28719, // Grand Marshal's Wyrmhide Gloves
 		[
 			"Reduces the cast time of your Cyclone spell by -0.1 sec.", // 33830 - https://www.wowhead.com/tbc/spell=33830
-		]
-	],
-	[
-		28727, // Pendant of the Violet Eye
-		[
-			"Each spell cast within 20 seconds will grant a stacking bonus of 21 mana regen per 5 sec. Expires after 20 seconds. Abilities with no mana cost will not trigger this trinket.", // 29601 - https://www.wowhead.com/tbc/spell=29601
 		]
 	],
 	[
@@ -2497,12 +2436,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		32330, // Totem of Ancestral Guidance
-		[
-			"Increases damage done by Chain Lightning and Lightning Bolt by up to 85.", // 41040 - https://www.wowhead.com/tbc/spell=41040
-		]
-	],
-	[
 		32368, // Tome of the Lightbringer
 		[
 			"Your Judgement ability also increases your shield block value by 186 for 5s.", // 41042 - https://www.wowhead.com/tbc/spell=41042
@@ -2563,12 +2496,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		32496, // Memento of Tyrande
-		[
-			"Each time you cast a spell, there is chance you will gain up to 76 mana per 5 for 15s.", // 37656 - https://www.wowhead.com/tbc/spell=37656
-		]
-	],
-	[
 		32500, // Crystal Spire of Karabor
 		[
 			"If your target is below 50% health, your direct healing spells will cause your target to be healed for an additional 220 health.", // 40972 - https://www.wowhead.com/tbc/spell=40972
@@ -2626,12 +2553,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		33505, // Totem of Living Water
 		[
 			"Reduces the base mana cost of Chain Heal by 20.", // 43752 - https://www.wowhead.com/tbc/spell=43752
-		]
-	],
-	[
-		33506, // Skycall Totem
-		[
-			"Your Lightning Bolt spell has a chance to grant 100 spell haste rating for 10s.", // 43751 - https://www.wowhead.com/tbc/spell=43751
 		]
 	],
 	[
@@ -3281,6 +3202,12 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		38506, // Don Carlos' Famous Hat
 		[
 			"", // 52172 - https://www.wowhead.com/tbc/spell=52172
+		]
+	],
+	[
+		186073, // Communal Totem of the Storm
+		[
+			"Reduces the mana cost of Stormstrike by 5.", // 352522 - https://www.wowhead.com/tbc/spell=352522
 		]
 	],
 ])

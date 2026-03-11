@@ -12,10 +12,11 @@ import (
 )
 
 type BuffConfig struct {
-	Label    string
-	ActionID ActionID
-	Duration time.Duration
-	Stats    []StatConfig
+	Label             string
+	ActionID          ActionID
+	Duration          time.Duration
+	Stats             []StatConfig
+	ExclusiveCategory string
 }
 
 type StatConfig struct {
@@ -51,6 +52,41 @@ func registerStatEffect(aura *Aura, config []StatConfig) {
 	}
 }
 
+func makeExclusiveMultiplierBuff(aura *Aura, stat stats.Stat, value float64, exclusiveCategory string) {
+	dep := aura.Unit.NewDynamicMultiplyStat(stat, value)
+	aura.NewExclusiveEffect(exclusiveCategory+stat.StatName()+"Mul", false, ExclusiveEffect{
+		Priority: value,
+		OnGain: func(ee *ExclusiveEffect, s *Simulation) {
+			ee.Aura.Unit.EnableBuildPhaseStatDep(s, dep)
+		},
+		OnExpire: func(ee *ExclusiveEffect, s *Simulation) {
+			ee.Aura.Unit.DisableBuildPhaseStatDep(s, dep)
+		},
+	})
+}
+
+func makeExclusiveFlatStatBuff(aura *Aura, stat stats.Stat, value float64, exclusiveCategory string) {
+	aura.NewExclusiveEffect(exclusiveCategory+stat.StatName()+"Add", false, ExclusiveEffect{
+		Priority: value,
+		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
+			ee.Aura.Unit.AddStatDynamic(sim, stat, value)
+		},
+		OnExpire: func(ee *ExclusiveEffect, sim *Simulation) {
+			ee.Aura.Unit.AddStatDynamic(sim, stat, -value)
+		},
+	})
+}
+
+func registerExlusiveEffects(aura *Aura, config []StatConfig, exclusiveCategory string) {
+	for _, statConfig := range config {
+		if statConfig.IsMultiplicative {
+			makeExclusiveMultiplierBuff(aura, statConfig.Stat, statConfig.Amount, exclusiveCategory)
+		} else {
+			makeExclusiveFlatStatBuff(aura, statConfig.Stat, statConfig.Amount, exclusiveCategory)
+		}
+	}
+}
+
 func makeStatBuff(char *Character, config BuffConfig) *Aura {
 	if config.Label == "" {
 		panic("Buff without label.")
@@ -62,7 +98,7 @@ func makeStatBuff(char *Character, config BuffConfig) *Aura {
 
 	baseAura := char.GetOrRegisterAura(Aura{
 		Label:      config.Label,
-		ActionID:   config.ActionID,
+		ActionID:   config.ActionID.WithTag(-1),
 		Duration:   TernaryDuration(config.Duration > 0, config.Duration, NeverExpires),
 		BuildPhase: CharacterBuildPhaseBuffs,
 		OnReset: func(aura *Aura, sim *Simulation) {
@@ -70,7 +106,11 @@ func makeStatBuff(char *Character, config BuffConfig) *Aura {
 		},
 	})
 
-	registerStatEffect(baseAura, config.Stats)
+	if config.ExclusiveCategory != "" {
+		registerExlusiveEffects(baseAura, config.Stats, config.ExclusiveCategory)
+	} else {
+		registerStatEffect(baseAura, config.Stats)
+	}
 	return baseAura
 }
 
@@ -121,14 +161,17 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 	}
 
 	if partyBuffs.BattleShout != proto.TristateEffect_TristateEffectMissing {
-		MakePermanent(BattleShoutAura(
+		boomingVoicePoints := int32(5)
+		aura := BattleShoutAura(
 			char,
 			false,
-			5,
+			boomingVoicePoints,
 			TernaryFloat64(IsImproved(partyBuffs.BattleShout), 1.25, 1.0),
 			partyBuffs.BsSolarianSapphire,
 			false,
-		))
+		)
+
+		ApplyFixedUptimeAura(aura, 1, aura.Duration+1, -1)
 	}
 
 	if partyBuffs.BloodPact != proto.TristateEffect_TristateEffectMissing {
@@ -144,13 +187,17 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 	}
 
 	if partyBuffs.CommandingShout != proto.TristateEffect_TristateEffectMissing {
-		MakePermanent(CommandingShoutAura(
+		boomingVoicePoints := int32(5)
+
+		aura := MakePermanent(CommandingShoutAura(
 			char,
 			false,
-			5,
+			boomingVoicePoints,
 			TernaryFloat64(IsImproved(partyBuffs.CommandingShout), 1.25, 1.0),
 			false,
 		))
+
+		ApplyFixedUptimeAura(aura, 1, aura.Duration, -1)
 	}
 
 	if partyBuffs.DevotionAura != proto.TristateEffect_TristateEffectMissing {
@@ -401,29 +448,36 @@ func ShadowProtectionAura(char *Character) *Aura {
 // /////////////////////////////////////////////////////////////////////////
 var BattleShoutCategory = "BattleShout"
 
-func BattleShoutAura(char *Character, isPlayer bool, boomingVoicePoints int32, commandingPresenceMultiplier float64, hasSolarianSapphire bool, hasT2 bool) *Aura {
+func GetBattleShoutValue(boomingVoicePoints int32, commandingPresenceMultiplier float64, hasSolarianSapphire bool, hasT2 bool, isPrepull bool) float64 {
 	baseApBuff := 306.0
 	apBuff := baseApBuff
-	if hasSolarianSapphire {
-		apBuff += 70
+	if isPrepull {
+		if hasSolarianSapphire {
+			apBuff += 70
+		}
+		if hasT2 {
+			apBuff += 30
+		}
 	}
-	if hasT2 {
-		apBuff += 30
-	}
-	nonPlayerApBuff := apBuff * commandingPresenceMultiplier
+	return apBuff * commandingPresenceMultiplier
+}
+
+func BattleShoutAura(char *Character, isPlayer bool, boomingVoicePoints int32, commandingPresenceMultiplier float64, hasSolarianSapphire bool, hasT2 bool) *Aura {
+	prepullApBuff := GetBattleShoutValue(boomingVoicePoints, commandingPresenceMultiplier, hasSolarianSapphire, hasT2, true)
+	apBuff := GetBattleShoutValue(boomingVoicePoints, commandingPresenceMultiplier, hasSolarianSapphire, hasT2, false)
 
 	var ee *ExclusiveEffect
 	aura := char.GetOrRegisterAura(Aura{
 		Label:      fmt.Sprintf("Battle Shout (%s)", Ternary(isPlayer, "Player", "External")),
 		ActionID:   ActionID{SpellID: 2048}.WithTag(TernaryInt32(isPlayer, 0, 1)),
-		Duration:   time.Duration(float64(time.Minute*2) * (1 + 0.25*float64(boomingVoicePoints))),
+		Duration:   time.Duration(float64(time.Minute*2) * (1 + 0.1*float64(boomingVoicePoints))),
 		BuildPhase: CharacterBuildPhaseBuffs,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			ee.SetPriority(sim, TernaryFloat64(sim.CurrentTime <= 0, nonPlayerApBuff, baseApBuff*commandingPresenceMultiplier))
+			ee.SetPriority(sim, TernaryFloat64(sim.CurrentTime > 0, apBuff, prepullApBuff))
 		},
 	})
 
-	ee = aura.NewExclusiveEffect(BattleShoutCategory, false, ExclusiveEffect{
+	ee = aura.NewExclusiveEffect(BattleShoutCategory, true, ExclusiveEffect{
 		Priority: 0,
 		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
 			ee.Aura.Unit.AddStatDynamic(sim, stats.AttackPower, ee.Priority)
@@ -453,26 +507,32 @@ func BloodPactAura(char *Character, improved bool) *Aura {
 
 var CommandingShoutCategory = "CommandingShout"
 
-func CommandingShoutAura(char *Character, isPlayer bool, boomingVoicePoints int32, commandingPresenceMultiplier float64, hasT6Tank2P bool) *Aura {
+func GetCommandingShoutValue(boomingVoicePoints int32, commandingPresenceMultiplier float64, hasT6Tank2P bool, isPrepull bool) float64 {
 	baseHpBuff := 1080.0
-	if hasT6Tank2P {
-		baseHpBuff += 170
+	if isPrepull {
+		if hasT6Tank2P {
+			baseHpBuff += 170
+		}
 	}
+	return baseHpBuff * commandingPresenceMultiplier
+}
 
-	nonPlayerHpBuff := baseHpBuff * commandingPresenceMultiplier
+func CommandingShoutAura(char *Character, isPlayer bool, boomingVoicePoints int32, commandingPresenceMultiplier float64, hasT6Tank2P bool) *Aura {
+	prepullHpBuff := GetCommandingShoutValue(boomingVoicePoints, commandingPresenceMultiplier, hasT6Tank2P, true)
+	hpBuff := GetCommandingShoutValue(boomingVoicePoints, commandingPresenceMultiplier, hasT6Tank2P, false)
 
 	var ee *ExclusiveEffect
 	aura := char.GetOrRegisterAura(Aura{
 		Label:      fmt.Sprintf("Commanding Shout (%s)", Ternary(isPlayer, "Player", "External")),
 		ActionID:   ActionID{SpellID: 469}.WithTag(TernaryInt32(isPlayer, 0, 1)),
-		Duration:   time.Duration(float64(time.Minute*2) * (1 + 0.25*float64(boomingVoicePoints))),
+		Duration:   time.Duration(float64(time.Minute*2) * (1 + 0.1*float64(boomingVoicePoints))),
 		BuildPhase: CharacterBuildPhaseBuffs,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			ee.SetPriority(sim, TernaryFloat64(sim.CurrentTime <= 0, nonPlayerHpBuff, baseHpBuff*commandingPresenceMultiplier))
+			ee.SetPriority(sim, TernaryFloat64(sim.CurrentTime > 0, hpBuff, prepullHpBuff))
 		},
 	})
 
-	ee = aura.NewExclusiveEffect(CommandingShoutCategory, false, ExclusiveEffect{
+	ee = aura.NewExclusiveEffect(CommandingShoutCategory, true, ExclusiveEffect{
 		Priority: 0,
 		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
 			ee.Aura.Unit.AddStatDynamic(sim, stats.Health, ee.Priority)
@@ -597,6 +657,8 @@ func TrueShotAuraBuff(char *Character) *Aura {
 	})
 }
 
+var UnleashedRageCategory = "UnleashedRage"
+
 func UnleashedRageAura(char *Character) *Aura {
 	return makeStatBuff(char, BuffConfig{
 		Label:    "Unleashed Rage",
@@ -604,6 +666,7 @@ func UnleashedRageAura(char *Character) *Aura {
 		Stats: []StatConfig{
 			{stats.AttackPower, 1.1, true},
 		},
+		ExclusiveCategory: UnleashedRageCategory,
 	})
 }
 
@@ -612,6 +675,8 @@ func UnleashedRageAura(char *Character) *Aura {
 //	Totems
 //
 // //////////////////////////
+var GraceOfAirTotemCategory = "GraceOfAirTotem"
+
 func GraceOfAirTotemAura(char *Character, improved bool, wfActive bool) *Aura {
 	agiBuff := 77.0
 	if improved {
@@ -629,7 +694,8 @@ func GraceOfAirTotemAura(char *Character, improved bool, wfActive bool) *Aura {
 		Stats: []StatConfig{
 			{stats.Agility, agiBuff, false},
 		},
-		Duration: duration,
+		Duration:          duration,
+		ExclusiveCategory: GraceOfAirTotemCategory,
 	}).ApplyOnReset(func(aura *Aura, sim *Simulation) {
 		if wfActive {
 			StartPeriodicAction(sim, PeriodicActionOptions{
@@ -643,6 +709,8 @@ func GraceOfAirTotemAura(char *Character, improved bool, wfActive bool) *Aura {
 	})
 }
 
+var ManaSpringTotemCategory = "ManaSpringTotem"
+
 func ManaSpringTotemAura(char *Character, improved bool) *Aura {
 	mp5Buff := 50.0
 	if improved {
@@ -655,8 +723,11 @@ func ManaSpringTotemAura(char *Character, improved bool) *Aura {
 		Stats: []StatConfig{
 			{stats.MP5, mp5Buff, false},
 		},
+		ExclusiveCategory: ManaSpringTotemCategory,
 	})
 }
+
+var StrengthOfEarthTotemCategory = "StrengthOfEarthTotem"
 
 func StrengthOfEarthTotemAura(char *Character, isImproved bool) *Aura {
 	strBuff := 86.0
@@ -670,6 +741,7 @@ func StrengthOfEarthTotemAura(char *Character, isImproved bool) *Aura {
 		Stats: []StatConfig{
 			{stats.Strength, strBuff, false},
 		},
+		ExclusiveCategory: StrengthOfEarthTotemCategory,
 	})
 }
 
@@ -690,9 +762,10 @@ func TranquilAirTotemAura(char *Character) *Aura {
 	return char.GetOrRegisterAura(Aura{
 		Label:    "Tranquil Air Totem",
 		ActionID: ActionID{SpellID: 25909},
-		Duration: time.Minute * 2,
 	}).AttachMultiplicativePseudoStatBuff(&char.PseudoStats.ThreatMultiplier, 0.8)
 }
+
+var WindfuryTotemCategory = "WindfuryTotem"
 
 func WindfuryTotemAura(char *Character, isImpoved bool) *Aura {
 	apBonus := 445.0
@@ -723,10 +796,10 @@ func WindfuryTotemAura(char *Character, isImpoved bool) *Aura {
 
 	var windfurySpell *Spell
 	wfProcTrigger := char.MakeProcTriggerAura(ProcTrigger{
-		Name:               "Windfury Totem",
-		MetricsActionID:    ActionID{SpellID: 25587},
+		Name:               "Windfury Totem Trigger",
+		MetricsActionID:    ActionID{SpellID: 25580, Tag: -1},
 		ProcChance:         0.2,
-		Duration:           time.Second * 10,
+		Duration:           NeverExpires,
 		Outcome:            OutcomeLanded,
 		Callback:           CallbackOnSpellHitDealt,
 		ProcMask:           ProcMaskMeleeMHAuto,
@@ -741,6 +814,12 @@ func WindfuryTotemAura(char *Character, isImpoved bool) *Aura {
 			}
 			char.AutoAttacks.MaybeReplaceMHSwing(sim, windfurySpell).Cast(sim, result.Target)
 		},
+	})
+
+	wfAura := char.GetOrRegisterAura(Aura{
+		Label:    "Windfury Totem",
+		ActionID: ActionID{SpellID: 25587, Tag: -1},
+		Duration: time.Second * 10,
 	}).ApplyOnInit(func(aura *Aura, sim *Simulation) {
 		config := *char.AutoAttacks.MHConfig()
 		config.ActionID = config.ActionID.WithTag(25584)
@@ -756,18 +835,36 @@ func WindfuryTotemAura(char *Character, isImpoved bool) *Aura {
 		})
 	})
 
+	wfAura.NewExclusiveEffect(WindfuryTotemCategory, false, ExclusiveEffect{
+		Priority: apBonus,
+		OnGain: func(_ *ExclusiveEffect, sim *Simulation) {
+			wfProcTrigger.Activate(sim)
+		},
+		OnExpire: func(_ *ExclusiveEffect, sim *Simulation) {
+			wfProcTrigger.Deactivate(sim)
+			wfAura.Deactivate(sim)
+		},
+	})
+
 	char.RegisterItemSwapCallback([]proto.ItemSlot{proto.ItemSlot_ItemSlotMainHand}, func(sim *Simulation, slot proto.ItemSlot) {
-		wfProcTrigger.Deactivate(sim)
+		wfAura.Deactivate(sim)
 	})
 
 	return wfProcTrigger
 }
 
+const (
+	WrathOfAirTotemCategory      = "WrathOfAirTotem"
+	WrathOfAirTotemBaseValue     = 101.0
+	WrathOfAirTotemImprovedValue = 20.0
+)
+
+func WrathOfAirTotemValue(improved bool) float64 {
+	return WrathOfAirTotemBaseValue + TernaryFloat64(improved, WrathOfAirTotemImprovedValue, 0)
+}
+
 func WrathOfAirTotemAura(char *Character, improved bool) *Aura {
-	buff := 101.0
-	if improved {
-		buff += 20.0
-	}
+	buff := WrathOfAirTotemValue(improved)
 
 	return makeStatBuff(char, BuffConfig{
 		Label:    "Wrath of Air Totem",
@@ -776,6 +873,7 @@ func WrathOfAirTotemAura(char *Character, improved bool) *Aura {
 			{stats.SpellDamage, buff, false},
 			{stats.HealingPower, buff, false},
 		},
+		ExclusiveCategory: WrathOfAirTotemCategory,
 	})
 }
 
@@ -824,8 +922,9 @@ func AtieshAura(char *Character, class proto.Class, numStaves float64) *Aura {
 
 func BraidedEterniumChainAura(char *Character) *Aura {
 	return makeStatBuff(char, BuffConfig{
-		Label:    "Braided Eternium Chain",
-		ActionID: ActionID{SpellID: 31025},
+		Label:             "Braided Eternium Chain",
+		ActionID:          ActionID{SpellID: 31025},
+		ExclusiveCategory: "Braided Eternium Chain",
 		Stats: []StatConfig{
 			{stats.MeleeCritRating, 28, false},
 		},
@@ -834,8 +933,9 @@ func BraidedEterniumChainAura(char *Character) *Aura {
 
 func ChainOfTheTwilightOwlAura(char *Character) *Aura {
 	return makeStatBuff(char, BuffConfig{
-		Label:    "Chain of the Twilight Owl",
-		ActionID: ActionID{SpellID: 31035},
+		Label:             "Chain of the Twilight Owl",
+		ActionID:          ActionID{SpellID: 31035},
+		ExclusiveCategory: "Chain of the Twilight Owl",
 		Stats: []StatConfig{
 			{stats.SpellCritPercent, 2, false},
 		},
@@ -861,6 +961,7 @@ func DraneiRacialAura(char *Character, caster bool) *Aura {
 			Stats: []StatConfig{
 				{stats.SpellHitPercent, 1, false},
 			},
+			ExclusiveCategory: "Inspiring Presence",
 		})
 	} else {
 		return makeStatBuff(char, BuffConfig{
@@ -869,14 +970,16 @@ func DraneiRacialAura(char *Character, caster bool) *Aura {
 			Stats: []StatConfig{
 				{stats.PhysicalHitPercent, 1, false},
 			},
+			ExclusiveCategory: "Heroic Presence",
 		})
 	}
 }
 
 func EyeOfTheNightAura(char *Character) *Aura {
 	return makeStatBuff(char, BuffConfig{
-		Label:    "Eye of the Night",
-		ActionID: ActionID{SpellID: 31033},
+		Label:             "Eye of the Night",
+		ActionID:          ActionID{SpellID: 31033},
+		ExclusiveCategory: "Eye of the Night",
 		Stats: []StatConfig{
 			{stats.SpellDamage, 34, false},
 		},
@@ -885,8 +988,9 @@ func EyeOfTheNightAura(char *Character) *Aura {
 
 func JadePendantOfBlastingAura(char *Character) *Aura {
 	return makeStatBuff(char, BuffConfig{
-		Label:    "Jade Pendant of Blasting",
-		ActionID: ActionID{SpellID: 25607},
+		Label:             "Jade Pendant of Blasting",
+		ActionID:          ActionID{SpellID: 25607},
+		ExclusiveCategory: "Jade Pendant of Blasting",
 		Stats: []StatConfig{
 			{stats.SpellDamage, 15, false},
 		},
@@ -1400,6 +1504,12 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		Duration: time.Minute * 10,
 	})
 
+	for _, pet := range character.Pets {
+		if !pet.IsGuardian() {
+			BloodlustAura(&pet.Character, actionTag)
+		}
+	}
+
 	aura := character.GetOrRegisterAura(Aura{
 		Label:    "Bloodlust-" + actionID.String(),
 		Tag:      BloodlustAuraTag,
@@ -1408,6 +1518,11 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		OnGain: func(aura *Aura, sim *Simulation) {
 			aura.Unit.MultiplyAttackSpeed(sim, 1.3)
 			aura.Unit.MultiplyCastSpeed(sim, 1.3)
+			for _, pet := range character.Pets {
+				if pet.IsEnabled() && !pet.IsGuardian() {
+					pet.GetAura(aura.Label).Activate(sim)
+				}
+			}
 			sated.Activate(sim)
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {

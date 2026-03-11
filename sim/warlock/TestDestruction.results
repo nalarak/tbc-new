@@ -291,6 +291,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestDestruction-AllItems-ChainoftheTwilightOwl-24121"
+ value: {
+  dps: 2011.04149
+  tps: 1753.39083
+ }
+}
+dps_results: {
  key: "TestDestruction-AllItems-CharmofAlacrity-25787"
  value: {
   dps: 1938.94417
@@ -323,6 +330,13 @@ dps_results: {
  value: {
   dps: 1938.94417
   tps: 1691.76655
+ }
+}
+dps_results: {
+ key: "TestDestruction-AllItems-CoronetofVerdantFlame-24122"
+ value: {
+  dps: 1894.05509
+  tps: 1647.66719
  }
 }
 dps_results: {
@@ -463,6 +477,13 @@ dps_results: {
  value: {
   dps: 2022.2484
   tps: 1760.07425
+ }
+}
+dps_results: {
+ key: "TestDestruction-AllItems-EyeoftheNight-24116"
+ value: {
+  dps: 1993.20344
+  tps: 1740.17511
  }
 }
 dps_results: {
@@ -662,6 +683,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestDestruction-AllItems-MementoofTyrande-32496"
+ value: {
+  dps: 1985.71277
+  tps: 1726.77338
+ }
+}
+dps_results: {
  key: "TestDestruction-AllItems-MindQuickeningGem-19339"
  value: {
   dps: 1999.65199
@@ -715,6 +743,13 @@ dps_results: {
  value: {
   dps: 1973.90916
   tps: 1718.42655
+ }
+}
+dps_results: {
+ key: "TestDestruction-AllItems-PendantoftheVioletEye-28727"
+ value: {
+  dps: 1962.38355
+  tps: 1708.84573
  }
 }
 dps_results: {
