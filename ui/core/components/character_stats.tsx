@@ -7,8 +7,6 @@ import * as Mechanics from '../constants/mechanics.js';
 import { IndividualSimUI } from '../individual_sim_ui';
 import { Player } from '../player.js';
 import { ItemSlot, PseudoStat, Race, Spec, Stat, TristateEffect, WeaponType } from '../proto/common.js';
-import { ActionId } from '../proto_utils/action_id';
-import { getStatName } from '../proto_utils/names.js';
 import { Stats, UnitStat } from '../proto_utils/stats.js';
 import { EventID, TypedEvent } from '../typed_event.js';
 import { Component } from './component.js';
@@ -527,8 +525,8 @@ export class CharacterStats extends Component {
 	private bonusStatsLink(displayStat: DisplayStat): HTMLElement {
 		const { stat, notEditable } = displayStat;
 		const rootStat = stat.hasRootStat() ? stat.getRootStat() : null;
-		const pseudoStat = !rootStat && stat.isPseudoStat() ? stat.getPseudoStat() : null;
-		const statName = rootStat ? translateStat(rootStat) : pseudoStat ? translatePseudoStat(pseudoStat) : stat.getStat();
+		const pseudoStat = rootStat === null && stat.isPseudoStat() ? stat.getPseudoStat() : null;
+		const statName = rootStat !== null ? translateStat(rootStat) : pseudoStat ? translatePseudoStat(pseudoStat) : stat.getStat();
 		const linkRef = ref<HTMLButtonElement>();
 		const iconRef = ref<HTMLDivElement>();
 
@@ -552,20 +550,20 @@ export class CharacterStats extends Component {
 					changedEvent: (player: Player<any>) => player.bonusStatsChangeEmitter,
 					getValue: (player: Player<any>) => {
 						const bonusStats = player.getBonusStats();
-						if (rootStat) {
+						if (rootStat !== null) {
 							return bonusStats.getStat(rootStat);
 						}
-						if (pseudoStat) {
+						if (pseudoStat !== null) {
 							return bonusStats.getPseudoStat(pseudoStat);
 						}
 						return bonusStats.getStat(stat.getStat());
 					},
 					setValue: (eventID: EventID, player: Player<any>, newValue: number) => {
 						let bonusStats = player.getBonusStats();
-						if (rootStat) {
+						if (rootStat !== null) {
 							bonusStats = bonusStats.withStat(rootStat, newValue);
 						}
-						if (pseudoStat) {
+						if (pseudoStat !== null) {
 							bonusStats = bonusStats.withPseudoStat(pseudoStat, newValue);
 						}
 						player.setBonusStats(eventID, bonusStats);

@@ -48,11 +48,7 @@ func (shaman *Shaman) setupItemSwapImbue(imbue proto.ShamanImbue, imbueID int32)
 	}
 }
 
-var WindfuryAPBonus = 475.0
-
 func (shaman *Shaman) newWindfuryImbueSpell(isMH bool) *core.Spell {
-	apBonus := WindfuryAPBonus
-
 	tag := 1
 	procMask := core.ProcMaskMeleeMHSpecial
 	weaponDamageFunc := shaman.MHWeaponDamage
@@ -60,7 +56,6 @@ func (shaman *Shaman) newWindfuryImbueSpell(isMH bool) *core.Spell {
 		tag = 2
 		procMask = core.ProcMaskMeleeOHSpecial
 		weaponDamageFunc = shaman.OHWeaponDamage
-		apBonus *= 2 // applied after 50% offhand penalty
 	}
 
 	spellConfig := core.SpellConfig{
@@ -75,6 +70,10 @@ func (shaman *Shaman) newWindfuryImbueSpell(isMH bool) *core.Spell {
 		ThreatMultiplier: 1,
 		BonusCoefficient: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			apBonus := shaman.WindfuryAPBonus
+			if spell.Tag == 2 { //OH Spell
+				apBonus *= 2
+			}
 			mAP := spell.MeleeAttackPower(target) + apBonus
 
 			baseDamage1 := weaponDamageFunc(sim, mAP)
@@ -148,7 +147,7 @@ func (shaman *Shaman) RegisterWindfuryImbue(procMask core.ProcMask) {
 
 	if mask.Matches(core.ProcMaskMeleeMH) {
 		aura.NewExclusiveEffect(core.WindfuryTotemCategory, false, core.ExclusiveEffect{
-			Priority: WindfuryAPBonus * 2, // Need to be higher than Windfury Totem priority
+			Priority: shaman.WindfuryAPBonus * 2, // Need to be higher than Windfury Totem priority
 		})
 	}
 
@@ -255,7 +254,7 @@ func (shaman *Shaman) RegisterFlametongueImbue(procMask core.ProcMask) {
 		aura := shaman.makeFTProcTriggerAura(itemSlot, triggerProcMask, flameTongueSpell)
 		if itemSlot == proto.ItemSlot_ItemSlotMainHand {
 			aura.NewExclusiveEffect(core.WindfuryTotemCategory, false, core.ExclusiveEffect{
-				Priority: WindfuryAPBonus * 2, // Need to be higher than Windfury Totem priority
+				Priority: shaman.WindfuryAPBonus * 2, // Need to be higher than Windfury Totem priority
 			})
 		}
 	}

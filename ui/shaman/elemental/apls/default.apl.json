@@ -34,7 +34,8 @@
 											"lhs": { "auraRemainingTime": { "auraId": { "spellId": 25528 } } },
 											"rhs": { "const": { "val": "5s" } }
 										}
-									}
+									},
+									{ "not": { "val": { "auraIsActive": { "auraId": { "spellId": 2062, "rank": 1 }, "includeReactionTime": true } } } }
 								]
 							}
 						},
@@ -89,6 +90,17 @@
 							}
 						},
 						"castSpell": { "spellId": { "spellId": 3738, "rank": 1 } }
+					}
+				},
+				{
+					"hide": true,
+					"action": {
+						"strictSequence": {
+							"actions": [
+								{ "castAllStatBuffCooldowns": { "statType1": 5, "statType2": -1, "statType3": -1 } },
+								{ "castSpell": { "spellId": { "spellId": 2062, "rank": 1 } } }
+							]
+						}
 					}
 				},
 				{

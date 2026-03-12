@@ -8,9 +8,7 @@ import (
 )
 
 func (shaman *Shaman) registerEarthElementalTotem() {
-
 	actionID := core.ActionID{SpellID: 2062}
-
 	totalDuration := time.Second * 120
 
 	earthElementalAura := shaman.RegisterAura(core.Aura{
@@ -55,5 +53,9 @@ func (shaman *Shaman) registerEarthElementalTotem() {
 	shaman.AddMajorCooldown(core.MajorCooldown{
 		Spell: shaman.EarthElementalTotem,
 		Type:  core.CooldownTypeDPS,
+		ShouldActivate: func(sim *core.Simulation, character *core.Character) bool {
+			// Fele should only be cast by manual APL intervention
+			return false
+		},
 	})
 }

@@ -295,11 +295,11 @@ func (war *Warrior) registerOneHandedWeaponSpecialization() {
 
 	hasOneHandEquipped := func() bool {
 		mh := war.GetMHWeapon()
-		if mh != nil && mh.HandType == proto.HandType_HandTypeOneHand {
+		if mh != nil && (mh.HandType == proto.HandType_HandTypeOneHand || mh.HandType == proto.HandType_HandTypeMainHand) {
 			return true
 		}
 		oh := war.GetOHWeapon()
-		if oh != nil && oh.HandType == proto.HandType_HandTypeOneHand {
+		if oh != nil && (oh.HandType == proto.HandType_HandTypeOneHand || oh.HandType == proto.HandType_HandTypeOffHand) {
 			return true
 		}
 		return false

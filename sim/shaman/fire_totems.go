@@ -167,5 +167,7 @@ func (shaman *Shaman) cancelFireTotems(sim *core.Simulation) {
 	if shaman.TotemOfWrath != nil {
 		shaman.TotemOfWrath.RelatedSelfBuff.Deactivate(sim)
 	}
-	shaman.FireElemental.Disable(sim)
+	if shaman.FireElementalTotem != nil {
+		shaman.FireElementalTotem.RelatedSelfBuff.Deactivate(sim)
+	}
 }

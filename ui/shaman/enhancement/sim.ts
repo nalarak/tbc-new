@@ -1,11 +1,10 @@
-import * as BuffDebuffInputs from '../../core/components/inputs/buffs_debuffs.js';
 import * as OtherInputs from '../../core/components/inputs/other_inputs.js';
 import { IndividualSimUI, registerSpecConfig } from '../../core/individual_sim_ui.js';
 import { Player } from '../../core/player.js';
 import { PlayerClasses } from '../../core/player_classes';
 import { APLRotation } from '../../core/proto/apl.js';
-import { Faction, IndividualBuffs, ItemSlot, PartyBuffs, PseudoStat, Race, Spec, Stat, UnitStats } from '../../core/proto/common.js';
-import { Stats, UnitStat } from '../../core/proto_utils/stats.js';
+import { Faction, ItemSlot, PseudoStat, Race, Spec, Stat } from '../../core/proto/common.js';
+import { UnitStat } from '../../core/proto_utils/stats.js';
 import * as ShamanInputs from '../inputs.js';
 import * as EnhancementInputs from './inputs.js';
 import * as Presets from './presets.js';
@@ -18,7 +17,21 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 	warnings: [],
 
 	// All stats for which EP should be calculated.
-	epStats: [Stat.StatAgility, Stat.StatIntellect, Stat.StatAttackPower],
+	epStats: [
+		Stat.StatStrength,
+		Stat.StatAgility,
+		Stat.StatIntellect,
+		Stat.StatAttackPower,
+		Stat.StatMeleeHitRating,
+		Stat.StatMeleeCritRating,
+		Stat.StatMeleeHasteRating,
+		Stat.StatExpertiseRating,
+		Stat.StatArmorPenetration,
+		Stat.StatSpellDamage,
+		Stat.StatNatureDamage,
+		Stat.StatSpellHitRating,
+		Stat.StatSpellCritRating,
+	],
 	epPseudoStats: [
 		PseudoStat.PseudoStatMainHandDps,
 		PseudoStat.PseudoStatOffHandDps,
@@ -29,7 +42,16 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 	epReferenceStat: Stat.StatAgility,
 	// Which stats to display in the Character Stats section, at the bottom of the left-hand sidebar.
 	displayStats: UnitStat.createDisplayStatArray(
-		[Stat.StatHealth, Stat.StatStamina, Stat.StatStrength, Stat.StatAgility, Stat.StatIntellect, Stat.StatAttackPower, Stat.StatSpellDamage],
+		[
+			Stat.StatHealth,
+			Stat.StatStamina,
+			Stat.StatStrength,
+			Stat.StatAgility,
+			Stat.StatIntellect,
+			Stat.StatAttackPower,
+			Stat.StatSpellDamage,
+			Stat.StatNatureDamage
+		],
 		[
 			PseudoStat.PseudoStatMeleeHitPercent,
 			PseudoStat.PseudoStatMeleeCritPercent,
@@ -44,7 +66,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 		// Default equipped gear.
 		gear: Presets.P1_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
-		epWeights: Presets.P3_EP_PRESET.epWeights,
+		epWeights: Presets.P1_EP_PRESET.epWeights,
 		other: Presets.OtherDefaults,
 		// Default consumes settings.
 		consumables: Presets.DefaultConsumables,
@@ -54,8 +76,8 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 		specOptions: Presets.DefaultOptions,
 		// Default raid/party buffs settings.
 		raidBuffs: Presets.DefaultRaidBuffs,
-		partyBuffs: PartyBuffs.create({}),
-		individualBuffs: IndividualBuffs.create({}),
+		partyBuffs: Presets.DefaultPartyBuffs,
+		individualBuffs: Presets.DefaultIndividualBuffs,
 		debuffs: Presets.DefaultDebuffs,
 	},
 
@@ -86,7 +108,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 		// Preset talents that the user can quickly select.
 		talents: [Presets.SubRestoIWT, Presets.SubRestoILS, Presets.SubEle],
 		// Preset rotations that the user can quickly select.
-		rotations: [Presets.ROTATION_PRESET_DEFAULT],
+		rotations: [Presets.ROTATION_PRESET_DEFAULT, Presets.ROTATION_PRESET_WIP],
 		// Preset gear configurations that the user can quickly select.
 		gear: [Presets.PRERAID_PRESET, Presets.P1_PRESET, Presets.P2_PRESET, Presets.P3_PRESET, Presets.P4_PRESET, Presets.P5_PRESET],
 	},
@@ -108,10 +130,10 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecEnhancementShaman, {
 			},
 			defaultGear: {
 				[Faction.Alliance]: {
-					1: Presets.P3_PRESET.gear,
+					1: Presets.P1_PRESET.gear,
 				},
 				[Faction.Horde]: {
-					1: Presets.P3_PRESET.gear,
+					1: Presets.P1_PRESET.gear,
 				},
 				[Faction.Unknown]: {},
 			},

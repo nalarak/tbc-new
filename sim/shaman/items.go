@@ -149,4 +149,21 @@ func init() {
 
 		character.ItemSwap.RegisterProc(28248, aura)
 	})
+
+	core.NewItemEffect(27815, func(agent core.Agent) {
+		shaman := agent.(ShamanAgent).GetShaman()
+
+		bonusAP := 80.0
+		aura := core.MakePermanent(shaman.RegisterAura(core.Aura{
+			Label: "Increased Windfury Weapon AP Bonus",
+			OnGain: func(aura *core.Aura, sim *core.Simulation) {
+				shaman.WindfuryAPBonus += bonusAP
+			},
+			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+				shaman.WindfuryAPBonus -= bonusAP
+			},
+		}))
+
+		shaman.ItemSwap.RegisterProc(27815, aura)
+	})
 }

@@ -245,8 +245,6 @@ func castSlowReductionAura(target *Unit, label string, spellID int32, multiplier
 type ExposeWeaknessAgiFunc func() float64
 
 func ExposeWeaknessAura(target *Unit, agilityFunc ExposeWeaknessAgiFunc) *Aura {
-	var currentApBonus float64
-
 	aura := target.GetOrRegisterAura(Aura{
 		Label:     "Expose Weakness",
 		Tag:       "ExposeWeakness",
@@ -254,14 +252,12 @@ func ExposeWeaknessAura(target *Unit, agilityFunc ExposeWeaknessAgiFunc) *Aura {
 		Duration:  time.Second * 7,
 		MaxStacks: 10000,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			currentApBonus = agilityFunc() * 0.25
-			target.PseudoStats.BonusAttackPower += currentApBonus
-			target.PseudoStats.BonusRangedAttackPower += currentApBonus
-			aura.SetStacks(sim, int32(currentApBonus))
+			aura.SetStacks(sim, int32(agilityFunc()*0.25))
 		},
-		OnExpire: func(aura *Aura, sim *Simulation) {
-			target.PseudoStats.BonusAttackPower -= currentApBonus
-			target.PseudoStats.BonusRangedAttackPower -= currentApBonus
+		OnStacksChange: func(aura *Aura, sim *Simulation, oldStacks int32, newStacks int32) {
+			newValue := float64(newStacks - oldStacks)
+			target.PseudoStats.BonusAttackPower += newValue
+			target.PseudoStats.BonusRangedAttackPower += newValue
 		},
 	})
 
@@ -465,16 +461,15 @@ func JudgementOfLightAura(target *Unit) *Aura {
 
 func JudgementOfWisdomAura(target *Unit) *Aura {
 	actionId := ActionID{SpellID: 27164}
-
-	return target.GetOrRegisterAura(Aura{
-		Label:    "Judgement of Wisdom",
-		ActionID: actionId,
-		Duration: time.Second * 20,
-		OnSpellHitTaken: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-			if spell.ProcMask.Matches(ProcMaskEmpty) {
-				return // Phantom spells (Romulo's, Lightning Capacitor, etc) don't proc JoW.
-			}
-
+	var aura *Aura
+	aura = target.MakeProcTriggerAura(ProcTrigger{
+		Name:       "Judgement of Wisdom",
+		ActionID:   actionId,
+		Duration:   time.Second * 20,
+		ProcChance: 0.5,
+		ProcMask:   ProcMaskDirect,
+		Callback:   CallbackOnSpellHitTaken,
+		Handler: func(sim *Simulation, spell *Spell, result *SpellResult) {
 			// Melee claim that wisdom can proc on misses.
 			if !spell.ProcMask.Matches(ProcMaskMeleeOrRanged) && !result.Landed() {
 				return
@@ -493,6 +488,8 @@ func JudgementOfWisdomAura(target *Unit) *Aura {
 			}
 		},
 	})
+
+	return aura
 }
 
 func MangleAura(target *Unit) *Aura {

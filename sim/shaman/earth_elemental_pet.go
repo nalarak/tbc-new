@@ -1,7 +1,6 @@
 package shaman
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/tbc/sim/core"
@@ -15,27 +14,25 @@ type EarthElemental struct {
 	shamanOwner *Shaman
 }
 
-var EarthElementalSpellPowerScaling = 1.3 // Estimated from beta testing
+var EarthElementalSpellPowerScaling = 0.5
 
 func (shaman *Shaman) NewEarthElemental() *EarthElemental {
 	earthElemental := &EarthElemental{
 		Pet: core.NewPet(core.PetConfig{
-			Name:                            "Greater Earth Elemental",
-			Owner:                           &shaman.Character,
-			BaseStats:                       shaman.earthElementalBaseStats(),
-			StatInheritance:                 shaman.earthElementalStatInheritance(),
-			EnabledOnStart:                  false,
-			IsGuardian:                      true,
-			HasDynamicMeleeSpeedInheritance: true,
-			HasDynamicCastSpeedInheritance:  true,
+			Name:            "Greater Earth Elemental",
+			Owner:           &shaman.Character,
+			BaseStats:       shaman.earthElementalBaseStats(),
+			StatInheritance: shaman.earthElementalStatInheritance(),
+			EnabledOnStart:  false,
+			IsGuardian:      true,
 		}),
 		shamanOwner: shaman,
 	}
-	baseMeleeDamage := 0.0
 	earthElemental.EnableAutoAttacks(earthElemental, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  baseMeleeDamage,
-			BaseDamageMax:  baseMeleeDamage,
+			// https://discord.com/channels/260297137554849794/1474479843428139101/1480955121394520237
+			BaseDamageMin:  174,
+			BaseDamageMax:  196,
 			SwingSpeed:     2,
 			CritMultiplier: earthElemental.DefaultMeleeCritMultiplier(),
 			SpellSchool:    core.SpellSchoolPhysical,
@@ -88,26 +85,17 @@ func (earthElemental *EarthElemental) TryCast(sim *core.Simulation, target *core
 
 func (shaman *Shaman) earthElementalBaseStats() stats.Stats {
 	return stats.Stats{
-		stats.Stamina: 10457,
+		stats.Stamina: 323, // Un-tested copied from fele
 	}
 }
 
 func (shaman *Shaman) earthElementalStatInheritance() core.PetStatInheritance {
 	return func(ownerStats stats.Stats) stats.Stats {
-		ownerSpellCritPercent := ownerStats[stats.SpellCritPercent]
-		ownerPhysicalCritPercent := ownerStats[stats.PhysicalCritPercent]
-		ownerHasteRating := ownerStats[stats.SpellHasteRating]
-		critPercent := core.TernaryFloat64(math.Abs(ownerPhysicalCritPercent) > math.Abs(ownerSpellCritPercent), ownerPhysicalCritPercent, ownerSpellCritPercent)
-
 		power := core.TernaryFloat64(shaman.Spec == proto.Spec_SpecEnhancementShaman, ownerStats[stats.AttackPower]*0.65, ownerStats[stats.SpellDamage])
 
 		return stats.Stats{
 			stats.Stamina:     ownerStats[stats.Stamina],
 			stats.AttackPower: power * EarthElementalSpellPowerScaling,
-
-			stats.SpellCritPercent:    critPercent,
-			stats.PhysicalCritPercent: critPercent,
-			stats.SpellHasteRating:    ownerHasteRating,
 		}
 	}
 }

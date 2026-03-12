@@ -562,20 +562,20 @@
 		},
 		{
 			"effectId": 241,
-			"spellId": 13503,
-			"name": "Enchant Weapon - Lesser Striking",
-			"icon": "trade_engraving",
-			"type": 13,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-			"quality": 1
-		},
-		{
-			"effectId": 241,
 			"spellId": 7745,
 			"name": "Enchant 2H Weapon - Minor Impact",
 			"icon": "trade_engraving",
 			"type": 13,
 			"enchantType": 1,
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"quality": 1
+		},
+		{
+			"effectId": 241,
+			"spellId": 13503,
+			"name": "Enchant Weapon - Lesser Striking",
+			"icon": "trade_engraving",
+			"type": 13,
 			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"quality": 1
 		},
@@ -1592,15 +1592,6 @@
 		},
 		{
 			"effectId": 1898,
-			"spellId": 20004,
-			"name": "Enchant Weapon - Major Spirit",
-			"icon": "trade_engraving",
-			"type": 13,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-			"quality": 1
-		},
-		{
-			"effectId": 1898,
 			"itemId": 16254,
 			"spellId": 20004,
 			"name": "Enchant Weapon - Lifestealing",
@@ -1608,6 +1599,15 @@
 			"type": 13,
 			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"quality": 3
+		},
+		{
+			"effectId": 1898,
+			"spellId": 20004,
+			"name": "Enchant Weapon - Major Spirit",
+			"icon": "trade_engraving",
+			"type": 13,
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"quality": 1
 		},
 		{
 			"effectId": 1899,
@@ -1988,8 +1988,8 @@
 		},
 		{
 			"effectId": 3289,
-			"spellId": 48557,
-			"name": "Riding Crop",
+			"spellId": 48555,
+			"name": "Skybreaker Whip",
 			"icon": "trade_engraving",
 			"type": 13,
 			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1997,8 +1997,8 @@
 		},
 		{
 			"effectId": 3289,
-			"spellId": 48555,
-			"name": "Skybreaker Whip",
+			"spellId": 48557,
+			"name": "Riding Crop",
 			"icon": "trade_engraving",
 			"type": 13,
 			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

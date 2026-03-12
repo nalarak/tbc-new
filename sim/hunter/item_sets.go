@@ -8,6 +8,84 @@ import (
 	"github.com/wowsims/tbc/sim/core/stats"
 )
 
+var ItemSetCryptstalkerArmor = core.NewItemSet(core.ItemSet{
+	Name: "Cryptstalker Armor",
+	ID:   530,
+	Bonuses: map[int32]core.ApplySetBonus{
+		// (2) Set: Increases the duration of your Rapid Fire by 4 secs.
+		2: func(agent core.Agent, setBonusAura *core.Aura) {
+			setBonusAura.AttachSpellMod(core.SpellModConfig{
+				Kind:      core.SpellMod_BuffDuration_Flat,
+				ClassMask: HunterSpellRapidFire,
+				TimeValue: time.Second * 4,
+			}).ExposeToAPL(28755)
+		},
+		// (4) Set: While your pet is active, increases Attack Power by 50 for both you and your pet.
+		4: func(agent core.Agent, setBonusAura *core.Aura) {
+			hunter := agent.(HunterAgent).GetHunter()
+			if hunter.Pet == nil {
+				return
+			}
+
+			apBuff := stats.Stats{
+				stats.AttackPower:       50,
+				stats.RangedAttackPower: 50,
+			}
+			ownerAura := hunter.RegisterAura(core.Aura{
+				Label:      "Stalker's Ally",
+				ActionID:   core.ActionID{SpellID: 28757},
+				Duration:   core.NeverExpires,
+				BuildPhase: setBonusAura.BuildPhase,
+			}).AttachStatsBuff(
+				apBuff,
+			)
+
+			petAura := hunter.Pet.RegisterAura(core.Aura{
+				Label:      "Stalker's Ally",
+				ActionID:   core.ActionID{SpellID: 28758},
+				Duration:   core.NeverExpires,
+				BuildPhase: setBonusAura.BuildPhase,
+			}).AttachStatsBuff(
+				apBuff,
+			)
+
+			if setBonusAura.BuildPhase == core.CharacterBuildPhaseGear {
+				core.MakePermanent(ownerAura)
+				core.MakePermanent(petAura)
+			} else {
+				setBonusAura.AttachDependentAura(ownerAura).AttachDependentAura(petAura)
+			}
+
+			setBonusAura.ExposeToAPL(28756)
+		},
+		// (6) Set: Your ranged critical hits cause an Adrenaline Rush, granting you 50 mana.
+		6: func(agent core.Agent, setBonusAura *core.Aura) {
+			hunter := agent.(HunterAgent).GetHunter()
+			manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 28753})
+
+			setBonusAura.AttachProcTrigger(core.ProcTrigger{
+				Name:            "Adrenaline Rush",
+				MetricsActionID: core.ActionID{SpellID: 28752},
+				Callback:        core.CallbackOnSpellHitDealt,
+				Outcome:         core.OutcomeCrit,
+				ProcMask:        core.ProcMaskRanged,
+
+				Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+					hunter.AddMana(sim, 50, manaMetrics)
+				},
+			}).ExposeToAPL(28752)
+		},
+		// (8) Set: Reduces the mana cost of your Multi-Shot and Aimed Shot by 20.
+		8: func(agent core.Agent, setBonusAura *core.Aura) {
+			setBonusAura.AttachSpellMod(core.SpellModConfig{
+				Kind:      core.SpellMod_PowerCost_Flat,
+				ClassMask: HunterSpellMultiShot | HunterSpellAimedShot,
+				IntValue:  -20,
+			}).ExposeToAPL(28751)
+		},
+	},
+})
+
 var ItemSetBeastLordArmor = core.NewItemSet(core.ItemSet{
 	Name: "Beast Lord Armor",
 	ID:   650,
@@ -108,8 +186,7 @@ func init() {
 	core.NewItemEffect(ThoridalTheStarsFuryItemID, func(agent core.Agent) {
 		hunter := agent.(HunterAgent).GetHunter()
 
-		wep := hunter.GetRangedWeapon()
-		isEquipped := wep != nil && wep.ID == ThoridalTheStarsFuryItemID
+		isEquipped := hunter.HasItemEquipped(ThoridalTheStarsFuryItemID, []proto.ItemSlot{proto.ItemSlot_ItemSlotRanged})
 		buildPhase := core.Ternary(isEquipped, core.CharacterBuildPhaseGear, core.CharacterBuildPhaseNone)
 
 		hasteAura := hunter.RegisterAura(core.Aura{
@@ -150,8 +227,8 @@ func init() {
 		}
 
 		hunter.RegisterItemSwapCallback([]proto.ItemSlot{proto.ItemSlot_ItemSlotRanged}, func(sim *core.Simulation, _ proto.ItemSlot) {
-			if ranged, weapon := hunter.AutoAttacks.Ranged(), hunter.GetRangedWeapon(); ranged != nil &&
-				(weapon == nil || weapon.ID != ThoridalTheStarsFuryItemID) {
+			if ranged := hunter.AutoAttacks.Ranged(); ranged != nil &&
+				!hunter.HasItemEquipped(ThoridalTheStarsFuryItemID, []proto.ItemSlot{proto.ItemSlot_ItemSlotRanged}) {
 				hunter.AmmoDamageBonus = hunter.AmmoDPS * ranged.SwingSpeed
 				ranged.BaseDamageMin += hunter.AmmoDamageBonus
 				ranged.BaseDamageMax += hunter.AmmoDamageBonus

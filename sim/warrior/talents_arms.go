@@ -218,12 +218,12 @@ func (war *Warrior) registerTwoHandedWeaponSpecialization() {
 		FloatValue: 0.02 * float64(war.Talents.TwoHandedWeaponSpecialization),
 	})
 
-	if war.GetHandType() == proto.HandType_HandTypeTwoHand {
+	if war.GetMainHandType() == proto.HandType_HandTypeTwoHand {
 		weaponMod.Activate()
 	}
 
 	war.RegisterItemSwapCallback(core.AllMeleeWeaponSlots(), func(sim *core.Simulation, slot proto.ItemSlot) {
-		if war.GetHandType() == proto.HandType_HandTypeTwoHand {
+		if war.GetMainHandType() == proto.HandType_HandTypeTwoHand {
 			weaponMod.Activate()
 		} else {
 			weaponMod.Deactivate()

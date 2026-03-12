@@ -111963,7 +111963,7 @@
 			"name": "Enchant Cloak - Spell Penetration",
 			"icon": "inv_misc_note_01",
 			"type": 4,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"quality": 2
 		},
 		{
@@ -112548,7 +112548,7 @@
 			"name": "Radiant Deep Peridot",
 			"icon": "inv_misc_gem_deepperidot_02",
 			"color": 5,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, -4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 2
 		},
@@ -112674,7 +112674,7 @@
 			"name": "Stormy Azure Moonstone",
 			"icon": "inv_misc_gem_azuredraenite_02",
 			"color": 3,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 2
 		},
@@ -112782,7 +112782,7 @@
 			"name": "Stormy Star of Elune",
 			"icon": "inv_jewelcrafting_starofelune_03",
 			"color": 3,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 3
 		},
@@ -112935,7 +112935,7 @@
 			"name": "Radiant Talasite",
 			"icon": "inv_jewelcrafting_talasite_03",
 			"color": 5,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 3
 		},
@@ -113422,7 +113422,7 @@
 			"name": "Mysterious Fire Opal",
 			"icon": "inv_jewelcrafting_nobletopaz_03",
 			"color": 6,
-			"stats": [0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 4,
 			"unique": true
@@ -113682,7 +113682,7 @@
 			"name": "Radiant Chrysoprase",
 			"icon": "inv_jewelcrafting_talasite_03",
 			"color": 5,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 1,
 			"quality": 4,
 			"unique": true
@@ -113902,7 +113902,7 @@
 			"name": "Stormy Empyrean Sapphire",
 			"icon": "inv_jewelcrafting_empyreansapphire_02",
 			"color": 3,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 3,
 			"quality": 4
 		},
@@ -114091,7 +114091,7 @@
 			"name": "Radiant Seaspray Emerald",
 			"icon": "inv_jewelcrafting_seasprayemerald_02",
 			"color": 5,
-			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, -6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			"stats": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 			"phase": 3,
 			"quality": 4
 		},
@@ -115454,6 +115454,7 @@
 		{ "id": 1784, "name": "Stealth", "icon": "ability_stealth", "rank": 1, "hasBuff": true },
 		{ "id": 1856, "name": "Vanish", "icon": "ability_vanish", "rank": 1, "hasBuff": true },
 		{ "id": 2048, "name": "Battle Shout", "icon": "ability_warrior_battleshout", "rank": 8, "hasBuff": true },
+		{ "id": 2062, "name": "Earth Elemental Totem", "icon": "spell_nature_earthelemental_totem", "rank": 1 },
 		{ "id": 2457, "name": "Battle Stance", "icon": "ability_warrior_offensivestance" },
 		{ "id": 2458, "name": "Berserker Stance", "icon": "ability_racial_avatar" },
 		{ "id": 2565, "name": "Shield Block", "icon": "ability_defend", "hasBuff": true },
@@ -115486,7 +115487,7 @@
 		{ "id": 9102, "name": "Enchant Cloak - Greater Agility", "icon": "trade_engraving" },
 		{ "id": 9108, "name": "Enchant Bracer - Major Intellect", "icon": "trade_engraving" },
 		{ "id": 9316, "name": "Inscription of Faith", "icon": "spell_holy_sealofsalvation" },
-		{ "id": 9318, "name": "Zandalar Signet of Serenity", "icon": "spell_holy_powerwordshield" },
+		{ "id": 9318, "name": "Greater Inscription of Faith", "icon": "spell_holy_greaterblessingofsalvation" },
 		{ "id": 9331, "name": "Greater Inscription of the Blade", "icon": "spell_holy_weaponmastery" },
 		{ "id": 9334, "name": "Enchant Gloves - Assault", "icon": "trade_engraving" },
 		{ "id": 9336, "name": "Greater Inscription of Vengeance", "icon": "spell_holy_greaterblessingofkings" },
@@ -115788,7 +115789,7 @@
 		{ "id": 13872, "name": "Endurance", "icon": "spell_shadow_shadowward", "rank": 2 },
 		{ "id": 13875, "name": "Improved Sprint", "icon": "ability_rogue_sprint", "rank": 2 },
 		{ "id": 13877, "name": "Blade Flurry", "icon": "ability_warrior_punishingblow", "hasBuff": true },
-		{ "id": 13889, "name": "Enchant Boots - Boar's Speed", "icon": "inv_misc_note_01" },
+		{ "id": 13889, "name": "Enchant Boots - Cat's Swiftness", "icon": "inv_misc_note_01" },
 		{ "id": 13958, "name": "Master of Deception", "icon": "spell_shadow_charm", "rank": 1 },
 		{ "id": 13960, "name": "Sword Specialization", "icon": "inv_sword_27", "rank": 1 },
 		{ "id": 13961, "name": "Sword Specialization", "icon": "inv_sword_27", "rank": 2 },
@@ -116354,7 +116355,7 @@
 		{ "id": 17958, "name": "Emberstorm", "icon": "spell_fire_selfdestruct", "rank": 5 },
 		{ "id": 17959, "name": "Ruin", "icon": "spell_shadow_shadowwordpain", "rank": 1 },
 		{ "id": 17962, "name": "Conflagrate", "icon": "spell_fire_fireball", "rank": 1 },
-		{ "id": 18029, "name": "Enchant Gloves - Major Healing", "icon": "inv_misc_note_01" },
+		{ "id": 18029, "name": "Glyph of Renewal", "icon": "spell_holy_healingaura" },
 		{ "id": 18048, "name": "Enchant Weapon - Major Healing", "icon": "inv_misc_note_01" },
 		{ "id": 18073, "name": "Pyroclasm", "icon": "spell_fire_volcano", "rank": 2 },
 		{ "id": 18094, "name": "Nightfall", "icon": "spell_shadow_twilight", "rank": 1 },

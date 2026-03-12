@@ -84,10 +84,18 @@ export const DefaultIndividualBuffs = IndividualBuffs.create({
 });
 
 export const DefaultDebuffs = Debuffs.create({
+	bloodFrenzy: true,
+	curseOfElements: TristateEffect.TristateEffectImproved,
+	curseOfRecklessness: true,
+	exposeArmor: TristateEffect.TristateEffectImproved,
+	faerieFire: TristateEffect.TristateEffectImproved,
+	giftOfArthas: true,
+	huntersMark: TristateEffect.TristateEffectImproved,
 	improvedSealOfTheCrusader: true,
 	judgementOfWisdom: true,
+	mangle: true,
 	misery: true,
-	curseOfElements: TristateEffect.TristateEffectImproved,
+	sunderArmor: true,
 });
 
 export const DefaultConsumables = ConsumesSpec.create({

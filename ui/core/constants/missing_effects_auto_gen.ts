@@ -1552,12 +1552,6 @@ export const MISSING_ITEM_EFFECTS = new Map<number, string[]>([
 		]
 	],
 	[
-		27815, // Totem of the Astral Winds
-		[
-			"Increases the attack power bonus on Windfury Weapon attacks by 80.", // 34244 - https://www.wowhead.com/tbc/spell=34244
-		]
-	],
-	[
 		27880, // Gladiator's Scaled Gauntlets
 		[
 			"Increases the Holy damage bonus of your Judgement of the Crusader by 20.", // 23300 - https://www.wowhead.com/tbc/spell=23300
